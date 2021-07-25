@@ -32,15 +32,14 @@ export async function getStaticProps() {
 }
 
 type IframeProps = {
-  url: string
+  url: string,
 }
 
 function Iframe({ url }: IframeProps) {
   return (
-    <iframe height="400px" src={url}></iframe>
+    <iframe className="bg-white p-2 shadow-md border border-blue-100"  height="400px" width="100%" src={url}></iframe>
   )
 }
-
 
 type HomeProps = {
   iframeURLs: {
@@ -61,22 +60,24 @@ export default function Home({ iframeURLs }: HomeProps) {
         <link rel="manifest" href="/site.webmanifest" />
       </Head>
 
-      <main role="main">
-        <h1>Callum's Running Dashboard</h1>
+      <main role="main" className="m-4">
+        <h1 className="prose prose-2xl text-blue-600">Callum's Running Dashboard</h1>
 
-        <section>
-          <h1>The last month</h1>
+        <h2 className="prose prose-xl">The last month</h2>
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <Iframe url={iframeURLs.cumulativeDistance}></Iframe>
           <Iframe url={iframeURLs.cumulativeDuration}></Iframe>
         </section>
 
-        <section>
-          <h1>Day-to-day</h1>
+        <h2 className="prose prose-xl">Day-to-day</h2>
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Iframe url={iframeURLs.distanceOverTime}></Iframe>
           <Iframe url={iframeURLs.durationOverTime}></Iframe>
           <Iframe url={iframeURLs.paceOverTime}></Iframe>
           <Iframe url={iframeURLs.heartRateOverTime}></Iframe>
-          <Iframe url={iframeURLs.heartRateZonesOverTime}></Iframe>
+          <div className="col-span-1 md:col-span-2">
+            <Iframe url={iframeURLs.heartRateZonesOverTime}></Iframe>
+          </div>
         </section>
       </main>
     </div>
