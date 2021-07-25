@@ -51,7 +51,7 @@ export default function Home({ iframeURLs }: HomeProps) {
   return (
     <div>
       <Head>
-        <title>Callum's Runs</title>
+        <title>Callum&apos;s Running Dashboard</title>
         <meta name="description" content="Dashboard for tracking my runs!" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -61,7 +61,7 @@ export default function Home({ iframeURLs }: HomeProps) {
       </Head>
 
       <main role="main" className="m-4">
-        <h1 className="prose prose-2xl text-blue-600">Callum's Running Dashboard</h1>
+        <h1 className="prose prose-2xl text-blue-600">Callum&apos;s Running Dashboard</h1>
 
         <h2 className="prose prose-xl">The last month</h2>
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
