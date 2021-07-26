@@ -60,7 +60,7 @@ export default function Home({ iframeURLs }: HomeProps) {
         <link rel="manifest" href="/site.webmanifest" />
       </Head>
 
-      <main role="main" className="m-4">
+      <main role="main" className="p-1 md:p-4 max-w-screen-2xl m-auto">
         <h1 className="prose prose-2xl text-blue-600">Callum&apos;s Running Dashboard</h1>
 
         <h2 className="prose prose-xl">The last month</h2>
