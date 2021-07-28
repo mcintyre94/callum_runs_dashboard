@@ -9,6 +9,7 @@ export async function getStaticProps() {
 
   const cumulativeDistanceIframeURL = await graphjson.makeCumulativeDistanceMonthIframeURL(apiKey, graphJSONProjectRuns)
   const cumulativeDurationIframeURL = await graphjson.makeCumulativeDurationMonthIframeURL(apiKey, graphJSONProjectRuns)
+  const heartRateZonesIframeURL = await graphjson.makeHeartRateZonesMonthIframeURL(apiKey, graphJSONProjectZones)
 
   const distanceOverTimeIframeURL = await graphjson.makeDistanceOverTimeIframeURL(apiKey, graphJSONProjectRuns)
   const durationOverTimeIframeURL = await graphjson.makeDurationOverTimeIframeURL(apiKey, graphJSONProjectRuns)
@@ -21,6 +22,7 @@ export async function getStaticProps() {
       iframeURLs: {
         cumulativeDistance: cumulativeDistanceIframeURL,
         cumulativeDuration: cumulativeDurationIframeURL,
+        heartRateZones: heartRateZonesIframeURL,
         distanceOverTime: distanceOverTimeIframeURL,
         durationOverTime: durationOverTimeIframeURL,
         paceOverTime: paceOverTimeIframeURL,
@@ -67,6 +69,7 @@ export default function Home({ iframeURLs }: HomeProps) {
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <Iframe url={iframeURLs.cumulativeDistance}></Iframe>
           <Iframe url={iframeURLs.cumulativeDuration}></Iframe>
+          <Iframe url={iframeURLs.heartRateZones}></Iframe>
         </section>
 
         <h2 className="prose prose-xl">Day-to-day</h2>

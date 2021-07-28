@@ -167,6 +167,34 @@ export const makeCumulativeDurationMonthIframeURL = async (apiKey: string, runsP
   return requestIframeURL(payload);
 }
 
+export const makeHeartRateZonesMonthIframeURL = async (apiKey: string, zonesProject: string) => {
+  const payload: GraphJSONPayload = {
+    api_key: apiKey,
+    IANA_time_zone: Timezone.London,
+    graph_type: GraphType.StackedLine,
+    start: Time.OneMonthAgo,
+    end: Time.Now,
+    filters: [projectFilter(zonesProject)],
+    metric: Metric.ZoneValue,
+    aggregation: Aggregation.Avg,
+    granularity: Granularity.Day,
+    split: Metric.Zone,
+    customizations: {
+      hideMissing: true,
+      hideSummary: false,
+      hideToolTip: false,
+      showDots: true,
+      hideXAxis: false,
+      showYAxis: false,
+      title: 'Heart Rate Zones (Last month)',
+      metric: MetricLabel.Proportion,
+      value_suffix: Suffix.Percent,
+    }
+  }
+
+  return requestIframeURL(payload);
+}
+
 export const makeDistanceOverTimeIframeURL = async (apiKey: string, runsProject: string) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
