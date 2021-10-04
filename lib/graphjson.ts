@@ -36,7 +36,8 @@ enum Aggregation {
 enum Time {
   OneMonthAgo = '1 month ago',
   Now = 'now',
-  Start2020 = '01/01/2020 0:00 am'
+  Start2020 = '01/01/2020 0:00 am',
+  FifteenSeptember2021 = '09/15/2021 0:00 am', // there's currently a broken HR zone on 15th september
 }
 
 enum Granularity {
@@ -173,7 +174,7 @@ export const makeHeartRateZonesMonthIframeURL = async (apiKey: string, zonesProj
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.StackedLine,
     start: Time.OneMonthAgo,
-    end: Time.Now,
+    end: Time.FifteenSeptember2021,
     filters: [projectFilter(zonesProject)],
     metric: Metric.ZoneValue,
     aggregation: Aggregation.Avg,
@@ -313,7 +314,7 @@ export const makeHeartRateZonesOverTimeIframeURL = async (apiKey: string, zonesP
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.StackedLine,
     start: Time.Start2020,
-    end: Time.Now,
+    end: Time.FifteenSeptember2021,
     filters: [projectFilter(zonesProject)],
     metric: Metric.ZoneValue,
     aggregation: Aggregation.Avg,
