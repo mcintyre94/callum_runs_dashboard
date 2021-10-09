@@ -26,6 +26,7 @@ enum GraphType {
   CumulativeLine = 'Cumulative Line',
   SingleLine = 'Single Line',
   StackedLine = 'Stacked Line',
+  Samples = 'Samples',
 }
 
 enum Aggregation {
@@ -46,6 +47,7 @@ enum Granularity {
 
 enum Timezone {
   London = 'Europe/London',
+  UTC = 'Etc/UTC',
 }
 
 enum ComparisonLabel {
@@ -91,8 +93,27 @@ type GraphJSONPayload = {
   customizations: GraphJSONCustomizations
 }
 
+type GraphJSONSamplePayload = {
+  api_key: string,
+  IANA_time_zone: string,
+  graph_type: GraphType,
+  start: string,
+  end: string,
+  filters: GraphJSONFilter[],
+  customizations: {}
+}
+
 type GraphJSONVisualiseIframeResponse = {
   url: string
+}
+
+type GraphJSONDataResponse = {
+  result: [
+    {
+      json: Object,
+      timestamp: number
+    }
+  ]
 }
 
 const projectFilter = (project: string): GraphJSONFilter =>
@@ -106,6 +127,19 @@ const requestIframeURL = async (payload: GraphJSONPayload) => {
   })
   const jsonResponse: GraphJSONVisualiseIframeResponse = await response.json();
   return jsonResponse.url
+}
+
+const requestData = async (payload: GraphJSONSamplePayload): Promise<GraphJSONDataResponse> => {
+  console.log(JSON.stringify(payload))
+
+  const response = await fetch('https://www.graphjson.com/api/visualize/data', {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+
+  const jsonResponse: GraphJSONDataResponse = await response.json()
+  return jsonResponse
 }
 
 export const makeCumulativeDistanceMonthIframeURL = async (apiKey: string, runsProject: string) => {
@@ -334,4 +368,24 @@ export const makeHeartRateZonesOverTimeIframeURL = async (apiKey: string, zonesP
   }
 
   return requestIframeURL(payload);
+}
+
+export type RunSample = {
+  timestamp: number
+  json: Object
+}
+
+export const getRunSamples = async (apiKey: string, runsProject: string, startDate: string, endDate: string): Promise<RunSample[]> => {
+  const payload: GraphJSONSamplePayload = {
+    api_key: apiKey,
+    IANA_time_zone: Timezone.UTC,
+    graph_type: GraphType.Samples,
+    start: startDate,
+    end: endDate,
+    filters: [projectFilter(runsProject)],
+    customizations: {},
+  }
+
+  const graphJSONData = await requestData(payload)
+  return graphJSONData.result
 }

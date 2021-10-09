@@ -1,8 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { DateTime } from 'luxon'
 import Papa from 'papaparse'
+import { getApiKey, getGraphJSONProjectRuns, getGraphJSONProjectZones } from '../../lib/env';
+import { getRunSamples } from '../../lib/graphjson'
 
 // This maps to the HealthExport CSV file, hence the terrible field names!
-type HealthExportRow = {
+export type HealthExportRow = {
   Date: string // eg. 2021-10-04 08:07:18 - 2021-10-04 08:40:04
   'Active energy burned(kcal)': number // eg. 364.671
   Activity: string // eg. Running
@@ -28,18 +31,39 @@ type OutputData = {
 }
 
 /**
- * Parse a timestamp from the start date of a date range
- * @param dateRangeString Start + end date, eg. "2021-07-10 09:05:06 - 2021-07-10 10:10:43"
- * @returns Timestamp, eg. 1625907906
+ * Get the start date as a UTC Date
+ * @param dateRange Start + end date, eg. "2021-07-10 09:05:06 - 2021-07-10 10:10:43"
+ * @returns A date with the UTC equivalent
  */
-export const dateRangeToTimestamp = (dateRangeString: string): number => {
-  const startDate = dateRangeString.split(" - ")[0]
-  const date = new Date(startDate)
-  const dateUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()));
-  return dateUTC.getTime() / 1000
+const getStartDateUTC = (dateRange: string): DateTime => {
+  const startDate = dateRange.split(" - ")[0]
+  return DateTime.fromSQL(startDate, {zone: "ETC/UTC"})
 }
 
-export default function Import(req: NextApiRequest, res: NextApiResponse<OutputData | Papa.ParseError[]>) {
+export const getExistingGraphJSONTimestamps = async (data: HealthExportRow[], graphJSONApiKey: string, graphJSONProjectRuns: string): Promise<Set<number>> => {
+  const earliestStartDate = getStartDateUTC(data[0].Date).startOf("day").toISO()
+  const latestStartDate = getStartDateUTC(data[data.length-1].Date).endOf("day").toISO()
+  const samples = await getRunSamples(graphJSONApiKey, graphJSONProjectRuns, earliestStartDate, latestStartDate)
+  return new Set(samples.map(s => s.timestamp))
+}
+
+/**
+ * Parse a timestamp from the start date of a date range
+ * @param dateRange Start + end date, eg. "2021-07-10 09:05:06 - 2021-07-10 10:10:43"
+ * @returns Timestamp, eg. 1625907906
+ */
+export const dateRangeToTimestamp = (dateRange: string): number => {
+  const startDate = getStartDateUTC(dateRange)
+  return startDate.toSeconds()
+}
+
+export default async function Import(req: NextApiRequest, res: NextApiResponse<OutputData | Papa.ParseError[]>) {
+  // TODO: Verify API key header
+
+  const graphJSONApiKey = getApiKey()
+  const graphJSONProjectRuns = getGraphJSONProjectRuns()
+  // const graphJSONProjectZones = getGraphJSONProjectZones()
+
   const csvData: string = req.body.csvData;
   const { data, errors } = Papa.parse<HealthExportRow>(csvData, {
     header: true,
@@ -53,5 +77,11 @@ export default function Import(req: NextApiRequest, res: NextApiResponse<OutputD
   const runsData = data.filter(d => d.Activity == 'Running');
   console.log(runsData)
 
-  return res.status(200).json({eventsLogged: 6})
+  const existingTimestamps = await getExistingGraphJSONTimestamps(runsData, graphJSONApiKey, graphJSONProjectRuns)
+  console.log(existingTimestamps)
+
+  // TODO: Translate runsData into graphJSON import data
+  // TODO: Filter out existingTimestamps
+
+  return res.status(200).json({eventsLogged: 0})
 }
