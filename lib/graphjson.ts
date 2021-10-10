@@ -130,8 +130,6 @@ const requestIframeURL = async (payload: GraphJSONPayload) => {
 }
 
 const requestData = async (payload: GraphJSONSamplePayload): Promise<GraphJSONDataResponse> => {
-  console.log(JSON.stringify(payload))
-
   const response = await fetch('https://www.graphjson.com/api/visualize/data', {
     method: "POST",
     headers: { "Content-Type": "application/json" },

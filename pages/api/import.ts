@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { DateTime } from 'luxon'
 import Papa from 'papaparse'
+import { Decimal } from 'decimal.js-light'
 import { getGraphJSONApiKey, getGraphJSONProjectRuns, getGraphJSONProjectZones, getImportApiKey } from '../../lib/env';
 import { getRunSamples } from '../../lib/graphjson'
 
@@ -11,9 +12,9 @@ export type HealthExportRow = {
   Activity: string // eg. Running
   'Distance(km)': number // eg. 5.202
   'Duration(s)': number // eg. 1966.157
-  'Elevation: Ascended(m)'?: number // eg. 36.58
-  'Elevation: Maximum(m)'?: number // eg. 45.724
-  'Elevation: Minimum(m)'?: number // eg. 13.158
+  'Elevation: Ascended(m)': number | null // eg. 36.58
+  'Elevation: Maximum(m)': number | null // eg. 45.724
+  'Elevation: Minimum(m)': number | null // eg. 13.158
   'Heart rate zone: A Easy (<115bpm)(%)': number // eg. 0
   'Heart rate zone: B Fat Burn (115-135bpm)(%)': number // eg. 0.01
   'Heart rate zone: C Moderate Training (135-155bpm)(%)': number // eg. 0.129
@@ -21,9 +22,30 @@ export type HealthExportRow = {
   'Heart rate zone: E Extreme Training (>175bpm)(%)': number // eg. 0
   'Heart rate: Average(count/min)': number // eg. 160.121
   'Heart rate: Maximum(count/min)': number // eg. 169
-  'METs Average(kcal/hr·kg)': number // eg. 11.289
-  'Weather: Humidity(%)'?: number // eg. 93, but always null for runs for some reason
-  'Weather: Temperature(degC)'?: number // eg. 11, but always null for runs for some reason
+  'METs Average(kcal/hr·kg)': number | null // eg. 11.289
+  'Weather: Humidity(%)': number | null // eg. 93, but always null for runs for some reason
+  'Weather: Temperature(degC)': number | null // eg. 11, but always null for runs for some reason
+}
+
+export type ActivityEvent = {
+  project: string
+  timestamp: number
+  kcal: number
+  activity_type: string
+  distance_km: number
+  duration_mins_f: number
+  pace_mins_per_km: number
+  elevation_ascended_m: number
+  elevation_maximum_m: number
+  elevation_minimum_m: number
+  heart_rate_a: number
+  heart_rate_b: number
+  heart_rate_c: number
+  heart_rate_d: number
+  heart_rate_e: number
+  heart_rate_avg_rounded_i: number
+  heart_rate_max: number
+  mets_average: number
 }
 
 type OutputData = {
@@ -41,12 +63,21 @@ type OutputError = {
  */
 const getStartDateUTC = (dateRange: string): DateTime => {
   const startDate = dateRange.split(" - ")[0]
-  return DateTime.fromSQL(startDate, {zone: "ETC/UTC"})
+  return DateTime.fromSQL(startDate, {zone: "Etc/UTC"})
 }
 
+/**
+ * Get the timestamps of runs that are already logged, to be used for de-duping
+ * @param data Rows of health export data
+ * @param graphJSONApiKey API key for GraphJSON
+ * @param graphJSONProjectRuns Project used in GraphJSON to record runs
+ * @returns The set of timestamps already recorded
+ */
 export const getExistingGraphJSONTimestamps = async (data: HealthExportRow[], graphJSONApiKey: string, graphJSONProjectRuns: string): Promise<Set<number>> => {
+  // Get a date before the first activity + after the last
   const earliestStartDate = getStartDateUTC(data[0].Date).startOf("day").toISO()
   const latestStartDate = getStartDateUTC(data[data.length-1].Date).endOf("day").toISO()
+  // Query GraphJSON for data between those dates
   const samples = await getRunSamples(graphJSONApiKey, graphJSONProjectRuns, earliestStartDate, latestStartDate)
   return new Set(samples.map(s => s.timestamp))
 }
@@ -61,7 +92,37 @@ export const dateRangeToTimestamp = (dateRange: string): number => {
   return startDate.toSeconds()
 }
 
+/**
+ * Convert a health export row to an activity event
+ * @param row Health Export row describing a single activity
+ * @param graphJSONProjectRuns GraphJSON runs project
+ * @returns Activity event object to upload to GraphJSON
+ */
+export const toActivityEvent = (row: HealthExportRow, graphJSONProjectRuns: string): ActivityEvent => {
+  const durationMins = new Decimal(row['Duration(s)']).dividedBy(60)
+  const paceMinsPerKm = durationMins.dividedBy(row['Distance(km)']).toDecimalPlaces(2).toNumber()
 
+  return {
+    project: graphJSONProjectRuns,
+    timestamp: dateRangeToTimestamp(row.Date),
+    kcal: row['Active energy burned(kcal)'],
+    activity_type: row.Activity,
+    distance_km: row['Distance(km)'],
+    duration_mins_f: durationMins.toDecimalPlaces(1).toNumber(),
+    pace_mins_per_km: paceMinsPerKm,
+    elevation_ascended_m: row['Elevation: Ascended(m)'] ?? 0,
+    elevation_maximum_m: row['Elevation: Maximum(m)'] ?? 0,
+    elevation_minimum_m: row['Elevation: Minimum(m)'] ?? 0,
+    heart_rate_a: row['Heart rate zone: A Easy (<115bpm)(%)'],
+    heart_rate_b: row['Heart rate zone: B Fat Burn (115-135bpm)(%)'],
+    heart_rate_c: row['Heart rate zone: C Moderate Training (135-155bpm)(%)'],
+    heart_rate_d: row['Heart rate zone: D Hard Training (155-175bpm)(%)'],
+    heart_rate_e: row['Heart rate zone: E Extreme Training (>175bpm)(%)'],
+    heart_rate_avg_rounded_i: new Decimal(row['Heart rate: Average(count/min)']).toInteger().toNumber(),
+    heart_rate_max: row['Heart rate: Maximum(count/min)'],
+    mets_average: row['METs Average(kcal/hr·kg)'] ?? 0,
+  }
+}
 
 export default async function Import(req: NextApiRequest, res: NextApiResponse<OutputData | Papa.ParseError[] | OutputError>) {
   const expectedImportApiKey = getImportApiKey()
@@ -85,13 +146,17 @@ export default async function Import(req: NextApiRequest, res: NextApiResponse<O
   }
 
   const runsData = data.filter(d => d.Activity == 'Running');
-  console.log(runsData)
+  console.log('runsData', runsData)
 
   const existingTimestamps = await getExistingGraphJSONTimestamps(runsData, graphJSONApiKey, graphJSONProjectRuns)
-  console.log(existingTimestamps)
+  console.log('existingTimestamps', existingTimestamps)
 
-  // TODO: Translate runsData into graphJSON import data
+  const activityEvents = runsData.map(data => toActivityEvent(data, graphJSONProjectRuns))
+  console.log('activityEvents', activityEvents)
+
   // TODO: Filter out existingTimestamps
+
+  // TODO: convert into HR zones
 
   return res.status(200).json({eventsLogged: 0})
 }
