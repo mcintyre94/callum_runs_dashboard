@@ -1,9 +1,9 @@
 import Head from 'next/head'
-import { getApiKey, getGraphJSONProjectRuns, getGraphJSONProjectZones } from '../lib/env';
+import { getGraphJSONApiKey, getGraphJSONProjectRuns, getGraphJSONProjectZones } from '../lib/env';
 import * as graphjson from '../lib/graphjson';
 
 export async function getStaticProps() {
-  const apiKey = getApiKey()
+  const apiKey = getGraphJSONApiKey()
   const graphJSONProjectRuns = getGraphJSONProjectRuns()
   const graphJSONProjectZones = getGraphJSONProjectZones()
 

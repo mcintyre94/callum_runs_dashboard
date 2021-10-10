@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { DateTime } from 'luxon'
 import Papa from 'papaparse'
-import { getApiKey, getGraphJSONProjectRuns, getGraphJSONProjectZones } from '../../lib/env';
+import { getGraphJSONApiKey, getGraphJSONProjectRuns, getGraphJSONProjectZones, getImportApiKey } from '../../lib/env';
 import { getRunSamples } from '../../lib/graphjson'
 
 // This maps to the HealthExport CSV file, hence the terrible field names!
@@ -28,6 +28,10 @@ export type HealthExportRow = {
 
 type OutputData = {
   eventsLogged: number
+}
+
+type OutputError = {
+  error: string
 }
 
 /**
@@ -57,10 +61,16 @@ export const dateRangeToTimestamp = (dateRange: string): number => {
   return startDate.toSeconds()
 }
 
-export default async function Import(req: NextApiRequest, res: NextApiResponse<OutputData | Papa.ParseError[]>) {
-  // TODO: Verify API key header
 
-  const graphJSONApiKey = getApiKey()
+
+export default async function Import(req: NextApiRequest, res: NextApiResponse<OutputData | Papa.ParseError[] | OutputError>) {
+  const expectedImportApiKey = getImportApiKey()
+  const importApiKeyHeader = req.headers['api-key']
+  if(importApiKeyHeader != expectedImportApiKey) {
+    return res.status(401).json({"error": "Missing or incorrect api-key"})
+  }
+
+  const graphJSONApiKey = getGraphJSONApiKey()
   const graphJSONProjectRuns = getGraphJSONProjectRuns()
   // const graphJSONProjectZones = getGraphJSONProjectZones()
 
@@ -71,7 +81,7 @@ export default async function Import(req: NextApiRequest, res: NextApiResponse<O
   });
 
   if(errors.length > 0) {
-    res.status(400).json(errors)
+    return res.status(400).json(errors)
   }
 
   const runsData = data.filter(d => d.Activity == 'Running');

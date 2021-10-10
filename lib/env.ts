@@ -1,4 +1,4 @@
-export const getApiKey = (): string => {
+export const getGraphJSONApiKey = (): string => {
   const apiKey = process.env.GRAPHJSON_API_KEY;
   if(!apiKey) {
     throw 'Missing environment variable GRAPHJSON_API_KEY. This can be obtained from the graphjson.com dashboard';
@@ -20,4 +20,12 @@ export const getGraphJSONProjectZones = (): string => {
     throw 'Missing environment variable GRAPHJSON_PROJECT_ZONES. This should be eg. hr_zones_dev';
   }
   return graphJsonProjectZones
+}
+
+export const getImportApiKey = (): string => {
+  const apiKey = process.env.IMPORT_API_KEY
+  if(!apiKey) {
+    throw 'Missing environment variable IMPORT_API_KEY. This is required to secure the import API route'
+  }
+  return apiKey
 }
