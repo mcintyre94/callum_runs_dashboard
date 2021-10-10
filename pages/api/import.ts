@@ -48,6 +48,13 @@ export type ActivityEvent = {
   mets_average: number
 }
 
+export type ZoneEvent = {
+  project: string
+  timestamp: number
+  zone: string
+  value: number
+}
+
 type OutputData = {
   eventsLogged: number
 }
@@ -98,13 +105,14 @@ export const dateRangeToTimestamp = (dateRange: string): number => {
  * @param graphJSONProjectRuns GraphJSON runs project
  * @returns Activity event object to upload to GraphJSON
  */
-export const toActivityEvent = (row: HealthExportRow, graphJSONProjectRuns: string): ActivityEvent => {
+export const toActivityEvent = (row: HealthExportRow, graphJSONProjectRuns: string):  ActivityEvent => {
+  const timestamp = dateRangeToTimestamp(row.Date)
   const durationMins = new Decimal(row['Duration(s)']).dividedBy(60)
   const paceMinsPerKm = durationMins.dividedBy(row['Distance(km)']).toDecimalPlaces(2).toNumber()
 
   return {
     project: graphJSONProjectRuns,
-    timestamp: dateRangeToTimestamp(row.Date),
+    timestamp,
     kcal: row['Active energy burned(kcal)'],
     activity_type: row.Activity,
     distance_km: row['Distance(km)'],
@@ -124,6 +132,42 @@ export const toActivityEvent = (row: HealthExportRow, graphJSONProjectRuns: stri
   }
 }
 
+const convertToPercentage = (zoneValue: number): number =>
+  new Decimal(zoneValue).times(100).toDecimalPlaces(1).toNumber()
+
+export const toZoneEvents = (event: ActivityEvent, graphJSONProjectZones: string): ZoneEvent[] => [
+  {
+    project: graphJSONProjectZones,
+    timestamp: event.timestamp,
+    zone: 'Easy (A)',
+    value: convertToPercentage(event.heart_rate_a),
+  },
+  {
+    project: graphJSONProjectZones,
+    timestamp: event.timestamp,
+    zone: 'Fat Burn (B)',
+    value: convertToPercentage(event.heart_rate_b),
+  },
+  {
+    project: graphJSONProjectZones,
+    timestamp: event.timestamp,
+    zone: 'Build Fitness (C)',
+    value: convertToPercentage(event.heart_rate_c),
+  },
+  {
+    project: graphJSONProjectZones,
+    timestamp: event.timestamp,
+    zone: 'Training (D)',
+    value: convertToPercentage(event.heart_rate_d),
+  },
+  {
+    project: graphJSONProjectZones,
+    timestamp: event.timestamp,
+    zone: 'Extreme (E)',
+    value: convertToPercentage(event.heart_rate_e),
+  },
+]
+
 export default async function Import(req: NextApiRequest, res: NextApiResponse<OutputData | Papa.ParseError[] | OutputError>) {
   const expectedImportApiKey = getImportApiKey()
   const importApiKeyHeader = req.headers['api-key']
@@ -133,7 +177,7 @@ export default async function Import(req: NextApiRequest, res: NextApiResponse<O
 
   const graphJSONApiKey = getGraphJSONApiKey()
   const graphJSONProjectRuns = getGraphJSONProjectRuns()
-  // const graphJSONProjectZones = getGraphJSONProjectZones()
+  const graphJSONProjectZones = getGraphJSONProjectZones()
 
   const csvData: string = req.body.csvData;
   const { data, errors } = Papa.parse<HealthExportRow>(csvData, {
@@ -154,9 +198,15 @@ export default async function Import(req: NextApiRequest, res: NextApiResponse<O
   const activityEvents = runsData.map(data => toActivityEvent(data, graphJSONProjectRuns))
   console.log('activityEvents', activityEvents)
 
-  // TODO: Filter out existingTimestamps
+  const newActivityEvents = activityEvents.filter(event => !existingTimestamps.has(event.timestamp))
+  console.log('newActivityEvents', newActivityEvents)
 
-  // TODO: convert into HR zones
+  const hrZoneEvents = newActivityEvents.flatMap(event => toZoneEvents(event, graphJSONProjectZones))
+  console.log('hrZoneEvents', hrZoneEvents)
+
+  // TODO: upload to GraphJSON
+
+  // TODO: Useful return data
 
   return res.status(200).json({eventsLogged: 0})
 }

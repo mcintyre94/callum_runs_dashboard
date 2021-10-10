@@ -1,4 +1,4 @@
-import { ActivityEvent, dateRangeToTimestamp, getExistingGraphJSONTimestamps, HealthExportRow, toActivityEvent } from '../pages/api/import'
+import { ActivityEvent, dateRangeToTimestamp, getExistingGraphJSONTimestamps, HealthExportRow, toActivityEvent, toZoneEvents, ZoneEvent } from '../pages/api/import'
 import * as graphjson from '../lib/graphjson'
 
 test('Converts a date range string to a timestamp', () => {
@@ -72,12 +72,10 @@ describe('toActivityEvent', () => {
       'Weather: Humidity(%)': null,
       'Weather: Temperature(degC)': null
     }
-
-    const projectRuns = 'projectRuns'
-    const converted = toActivityEvent(data, projectRuns)
-
+    const project = 'projectRuns'
+    const converted = toActivityEvent(data, project)
     const expected: ActivityEvent = {
-      project: projectRuns,
+      project,
       timestamp: 1633782798,
       kcal: 584.462,
       activity_type: 'Running',
@@ -96,7 +94,6 @@ describe('toActivityEvent', () => {
       heart_rate_max: 172,
       mets_average: 11.522,
     }
-
     expect(converted).toStrictEqual(expected)
   })
 
@@ -121,12 +118,10 @@ describe('toActivityEvent', () => {
       'Weather: Humidity(%)': null,
       'Weather: Temperature(degC)': null
     }
-
-    const projectRuns = 'projectRuns'
-    const converted = toActivityEvent(data, projectRuns)
-
+    const project = 'projectRuns'
+    const converted = toActivityEvent(data, project)
     const expected: ActivityEvent = {
-      project: projectRuns,
+      project,
       timestamp: 1632588899,
       kcal: 553.317,
       activity_type: 'Running',
@@ -145,7 +140,64 @@ describe('toActivityEvent', () => {
       heart_rate_max: 169,
       mets_average: 0,
     }
-
     expect(converted).toStrictEqual(expected)
   })
+})
+
+test('Convert an activity event to correct zone events', () => {
+  const event: ActivityEvent = {
+    project: 'callum_runs_dev',
+    timestamp: 1633782798,
+    kcal: 584.462,
+    activity_type: 'Running',
+    distance_km: 8.16,
+    duration_mins_f: 50.3,
+    pace_mins_per_km: 6.17,
+    elevation_ascended_m: 34.38,
+    elevation_maximum_m: 45.912,
+    elevation_minimum_m: 13.117,
+    heart_rate_a: 0.002,
+    heart_rate_b: 0,
+    heart_rate_c: 0.091,
+    heart_rate_d: 0.907,
+    heart_rate_e: 0,
+    heart_rate_avg_rounded_i: 164,
+    heart_rate_max: 172,
+    mets_average: 11.522
+  }
+  const project = 'projectZones'
+  const converted = toZoneEvents(event, project)
+  const expected: ZoneEvent[] = [
+    {
+      project,
+      timestamp: 1633782798,
+      zone: 'Easy (A)',
+      value: 0.2,
+    },
+    {
+      project,
+      timestamp: 1633782798,
+      zone: 'Fat Burn (B)',
+      value: 0,
+    },
+    {
+      project,
+      timestamp: 1633782798,
+      zone: 'Build Fitness (C)',
+      value: 9.1,
+    },
+    {
+      project,
+      timestamp: 1633782798,
+      zone: 'Training (D)',
+      value: 90.7,
+    },
+    {
+      project,
+      timestamp: 1633782798,
+      zone: 'Extreme (E)',
+      value: 0,
+    },
+  ]
+  expect(converted).toStrictEqual(expected)
 })
