@@ -1,3 +1,5 @@
+import type { GraphJSONEvent } from "./event"
+
 enum LineColour {
   Distance = '#0345fc',
   Duration = '#036648',
@@ -101,6 +103,12 @@ type GraphJSONSamplePayload = {
   end: string,
   filters: GraphJSONFilter[],
   customizations: {}
+}
+
+type GraphJSONEventPayload = {
+  api_key: string,
+  json: string,
+  timestamp: number,
 }
 
 type GraphJSONVisualiseIframeResponse = {
@@ -386,4 +394,25 @@ export const getRunSamples = async (apiKey: string, runsProject: string, startDa
 
   const graphJSONData = await requestData(payload)
   return graphJSONData.result
+}
+
+export const logEvent = async (event: GraphJSONEvent, apiKey: string): Promise<void> => {
+  const payload: GraphJSONEventPayload = {
+    api_key: apiKey,
+    json: JSON.stringify(event),
+    timestamp: event.timestamp
+  }
+
+  const result = await fetch('https://www.graphjson.com/api/log', {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+
+  if(result.status != 200) {
+    const resultText = await result.text()
+    console.error(`GraphJSON error. Status ${result.status}, ${result.statusText}, ${resultText}`)
+  }
+
+  console.log('Logged event to GraphJSON', event)
 }

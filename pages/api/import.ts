@@ -3,7 +3,8 @@ import { DateTime } from 'luxon'
 import Papa from 'papaparse'
 import { Decimal } from 'decimal.js-light'
 import { getGraphJSONApiKey, getGraphJSONProjectRuns, getGraphJSONProjectZones, getImportApiKey } from '../../lib/env';
-import { getRunSamples } from '../../lib/graphjson'
+import { getRunSamples, logEvent } from '../../lib/graphjson'
+import type { ActivityEvent, GraphJSONEvent, ZoneEvent } from '../../lib/event';
 
 // This maps to the HealthExport CSV file, hence the terrible field names!
 export type HealthExportRow = {
@@ -25,34 +26,6 @@ export type HealthExportRow = {
   'METs Average(kcal/hr·kg)': number | null // eg. 11.289
   'Weather: Humidity(%)': number | null // eg. 93, but always null for runs for some reason
   'Weather: Temperature(degC)': number | null // eg. 11, but always null for runs for some reason
-}
-
-export type ActivityEvent = {
-  project: string
-  timestamp: number
-  kcal: number
-  activity_type: string
-  distance_km: number
-  duration_mins_f: number
-  pace_mins_per_km: number
-  elevation_ascended_m: number
-  elevation_maximum_m: number
-  elevation_minimum_m: number
-  heart_rate_a: number
-  heart_rate_b: number
-  heart_rate_c: number
-  heart_rate_d: number
-  heart_rate_e: number
-  heart_rate_avg_rounded_i: number
-  heart_rate_max: number
-  mets_average: number
-}
-
-export type ZoneEvent = {
-  project: string
-  timestamp: number
-  zone: string
-  value: number
 }
 
 type OutputData = {
@@ -190,21 +163,21 @@ export default async function Import(req: NextApiRequest, res: NextApiResponse<O
   }
 
   const runsData = data.filter(d => d.Activity == 'Running');
-  console.log('runsData', runsData)
 
   const existingTimestamps = await getExistingGraphJSONTimestamps(runsData, graphJSONApiKey, graphJSONProjectRuns)
   console.log('existingTimestamps', existingTimestamps)
 
-  const activityEvents = runsData.map(data => toActivityEvent(data, graphJSONProjectRuns))
-  console.log('activityEvents', activityEvents)
+  const eventsToLog: GraphJSONEvent[] = runsData.flatMap(data => {
+    const activityEvent = toActivityEvent(data, graphJSONProjectRuns)
+    if(existingTimestamps.has(activityEvent.timestamp)) {
+      return [] // don't generate any events when it matches an existing timestamp
+    } else {
+      const zoneEvents = toZoneEvents(activityEvent, graphJSONProjectZones)
+      return [activityEvent, ...zoneEvents]
+    }
+  })
 
-  const newActivityEvents = activityEvents.filter(event => !existingTimestamps.has(event.timestamp))
-  console.log('newActivityEvents', newActivityEvents)
-
-  const hrZoneEvents = newActivityEvents.flatMap(event => toZoneEvents(event, graphJSONProjectZones))
-  console.log('hrZoneEvents', hrZoneEvents)
-
-  // TODO: upload to GraphJSON
+  for(const event of eventsToLog) await logEvent(event, graphJSONApiKey)
 
   // TODO: Useful return data
 
