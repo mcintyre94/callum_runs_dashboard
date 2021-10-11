@@ -5,6 +5,7 @@ import { Decimal } from 'decimal.js-light'
 import { getGraphJSONApiKey, getGraphJSONProjectRuns, getGraphJSONProjectZones, getImportApiKey } from '../../lib/env';
 import { getRunSamples, logEvent } from '../../lib/graphjson'
 import type { ActivityEvent, GraphJSONEvent, ZoneEvent } from '../../lib/event';
+import parseForm from '../../middleware/form-parser';
 
 // This maps to the HealthExport CSV file, hence the terrible field names!
 export type HealthExportRow = {
@@ -142,7 +143,20 @@ export const toZoneEvents = (event: ActivityEvent, graphJSONProjectZones: string
   },
 ]
 
-export default async function Import(req: NextApiRequest, res: NextApiResponse<OutputData | Papa.ParseError[] | OutputError>) {
+// From https://nextjs.org/docs/api-routes/api-middlewares#connectexpress-middleware-support
+function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: Function) {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result: any) => {
+      if (result instanceof Error) {
+        return reject(result)
+      }
+
+      return resolve(result)
+    })
+  })
+}
+
+async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Papa.ParseError[] | OutputError>) {
   const expectedImportApiKey = getImportApiKey()
   const importApiKeyHeader = req.headers['api-key']
   if(importApiKeyHeader != expectedImportApiKey) {
@@ -153,7 +167,10 @@ export default async function Import(req: NextApiRequest, res: NextApiResponse<O
   const graphJSONProjectRuns = getGraphJSONProjectRuns()
   const graphJSONProjectZones = getGraphJSONProjectZones()
 
+  await runMiddleware(req, res, parseForm)
+
   const csvData: string = req.body.csvData;
+
   const { data, errors } = Papa.parse<HealthExportRow>(csvData, {
     header: true,
     dynamicTyping: true,
@@ -188,3 +205,11 @@ export default async function Import(req: NextApiRequest, res: NextApiResponse<O
   console.log('Response', response)
   return res.status(200).json(response)
 }
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
+
+export default handler
