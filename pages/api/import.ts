@@ -29,7 +29,8 @@ export type HealthExportRow = {
 }
 
 type OutputData = {
-  eventsLogged: number
+  loggedCount: number
+  filteredTimestampsCount: number
 }
 
 type OutputError = {
@@ -179,7 +180,11 @@ export default async function Import(req: NextApiRequest, res: NextApiResponse<O
 
   for(const event of eventsToLog) await logEvent(event, graphJSONApiKey)
 
-  // TODO: Useful return data
+  const response: OutputData = {
+    loggedCount: eventsToLog.length,
+    filteredTimestampsCount: existingTimestamps.size,
+  }
 
-  return res.status(200).json({eventsLogged: 0})
+  console.log('Response', response)
+  return res.status(200).json(response)
 }
