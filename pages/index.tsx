@@ -65,8 +65,6 @@ export default function Home({ iframeURLs }: HomeProps) {
       <main role="main" className="p-1 md:p-4 max-w-screen-2xl m-auto">
         <h1 className="prose prose-2xl text-blue-600">Callum&apos;s Running Dashboard</h1>
 
-        <span className="text-gray-600 text-sm">HR zone graphs temporarily paused!</span>
-
         <h2 className="prose prose-xl">The last month</h2>
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <Iframe url={iframeURLs.cumulativeDistance}></Iframe>
