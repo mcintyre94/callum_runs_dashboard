@@ -5,7 +5,8 @@ import { Decimal } from 'decimal.js-light'
 import { getGraphJSONApiKey, getGraphJSONProjectRuns, getGraphJSONProjectZones, getImportApiKey } from '../../lib/env';
 import { getRunSamples, logEvent } from '../../lib/graphjson'
 import type { ActivityEvent, GraphJSONEvent, ZoneEvent } from '../../lib/event';
-import parseForm from '../../middleware/form-parser';
+import formidable from "formidable";
+
 
 // This maps to the HealthExport CSV file, hence the terrible field names!
 export type HealthExportRow = {
@@ -143,17 +144,18 @@ export const toZoneEvents = (event: ActivityEvent, graphJSONProjectZones: string
   },
 ]
 
-// From https://nextjs.org/docs/api-routes/api-middlewares#connectexpress-middleware-support
-function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: Function) {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result: any) => {
-      if (result instanceof Error) {
-        return reject(result)
+async function parseForm(req: NextApiRequest): Promise<string> {
+  const form = formidable()
+  const csvData: string = await new Promise(function (resolve, reject) {
+    form.parse(req, function (err, fields, _files) {
+      if(err) {
+        reject(err)
+        return
       }
-
-      return resolve(result)
+      resolve(fields.csvData as string)
     })
   })
+  return csvData
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Papa.ParseError[] | OutputError>) {
@@ -167,9 +169,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Pa
   const graphJSONProjectRuns = getGraphJSONProjectRuns()
   const graphJSONProjectZones = getGraphJSONProjectZones()
 
-  await runMiddleware(req, res, parseForm)
-
-  const csvData: string = req.body.csvData;
+  const csvData = await parseForm(req)
 
   const { data, errors } = Papa.parse<HealthExportRow>(csvData, {
     header: true,
