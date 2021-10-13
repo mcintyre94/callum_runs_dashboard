@@ -36,7 +36,7 @@ enum Aggregation {
   Avg = 'Avg',
 }
 
-enum Time {
+export enum Time {
   OneMonthAgo = '1 month ago',
   Now = 'now',
   Start2020 = '01/01/2020 0:00 am'

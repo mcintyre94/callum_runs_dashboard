@@ -2,6 +2,9 @@ import React, { useEffect, useState, useRef } from 'react'
 import Editor, { Monaco } from '@monaco-editor/react'
 import { createPythonClient } from '@run-wasm/python'
 import Script from 'next/script'
+import { clearGraph, defaultGraphCode, preloadData, preloadMatplotlibCode } from '../pythonFragments'
+import { getRunSamples, RunSample, Time } from '../lib/graphjson'
+import { getGraphJSONApiKey, getGraphJSONProjectRuns } from '../lib/env'
 
 declare global {
   // <- [reference](https://stackoverflow.com/a/56458070/11542903)
@@ -10,36 +13,23 @@ declare global {
   }
 }
 
-function App() {
-  const [
-    inputCode,
-    setInputCode,
-  ] = useState(`# Note that matplotlib.pyplot as plt is pre-imported
-import numpy as np
-plt.clf() # Clear existing plot
-plt.plot([0, 1], [0, 1], label="Line")
-nx = 101
-x = np.linspace(0.0, 1.0, nx)
-y = 0.3*np.sin(x*8) + 0.4
-plt.plot(x, y, label="Curve")
-plt.legend()
-plt.show()`)
+// Server-side props: fetch the run data using GraphJSON
+export async function getServerSideProps() {
+  const apiKey = getGraphJSONApiKey()
+  const project = getGraphJSONProjectRuns()
 
+  const runSamples: RunSample[] = await getRunSamples(apiKey, project, Time.Start2020, Time.Now)
+  const runData = runSamples.map(s => s.json)
+
+  return { props: { runData } }
+}
+
+function App( { runData }) {
+  const [inputCode, setInputCode] = useState(defaultGraphCode)
   const [loadingText, setLoadingText] = useState('Loading pyodide...')
   const [pyodide, setPyodide] = useState(null)
   const editorRef = useRef(null)
   const [monaco, setMonaco] = useState<Monaco>(null)
-  // Python code that is preloaded before the user's code is run
-  // <- [reference](https://stackoverflow.com/a/59571016/1375972)
-  const preloadMatplotlibCode = `
-import matplotlib.pyplot as plt
-from js import document
-f = plt.figure()
-def get_render_element(self):
-    return document.getElementById('plot')
-f.canvas.create_root_element = get_render_element.__get__(
-    get_render_element, f.canvas.__class__
-)`
 
   // Note that window.loadPyodide comes from the beforeInteractive pyodide.js Script
   useEffect(() => {
@@ -51,6 +41,11 @@ f.canvas.create_root_element = get_render_element.__get__(
         setLoadingText('Loading matplotlib...')
         return preloadMatplotlib(pyodide)
       })
+      .then((pyodide) => {
+        setLoadingText('Preloading data...')
+        runCode(preloadData(runData), pyodide)
+        return pyodide
+      })
       .then((pyodide) => setPyodide(pyodide))
   }, [])
 
@@ -61,10 +56,10 @@ f.canvas.create_root_element = get_render_element.__get__(
   }
 
   async function runCode(code: string, pyodide: any) {
-    console.log('running code', code)
     let pythonClient = createPythonClient(pyodide)
-    console.log(pythonClient)
-    await pythonClient.run({ code })
+    await pythonClient.run( { code: clearGraph })
+    const output = await pythonClient.run({ code })
+    console.log('output', output)
   }
 
   function handleEditorDidMount(editor, monaco) {
@@ -74,37 +69,46 @@ f.canvas.create_root_element = get_render_element.__get__(
 
   return (
     <>
-      <div className="max-w-4xl px-4 py-8 mx-auto sm:px-6 lg:px-8">
+      <div className="max-w-4xl px-4 py-2 mx-auto sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
           <Script
             src="https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js"
             strategy="beforeInteractive"
           />
           <Script src="https://kit.fontawesome.com/137d63e13e.js" />
-          <main className="mx-auto my-16 max-w-7xl sm:mt-24">
+          <main className="mx-auto py-2 max-w-7xl sm:mt-24">
             <div className="text-left">
-              <h1 className="text-3xl tracking-tight text-gray-900 dark:text-white sm:text-5xl md:text-5xl">
-                <span className="block font-mono xl:inline">
-                  Embed executable code snippets on your site
-                </span>
-              </h1>
+              <h1 className="text-3xl tracking-tight text-gray-900 dark:text-white sm:text-5xl md:text-5xl">Playground!</h1>
               <p className="max-w-md mt-4 text-base text-gray-500 dark:text-gray-450 md:mx-auto sm:text-lg md:mt-16 md:text-xl md:max-w-3xl">
-                <b>run-wasm</b> is an api which allows you to easily execute
-                code via WebAssembly based programming languages. <br />
-                <br /> It allows you to include interactive code examples in
-                your website. <br />
-                <br />
-                This page demonstrates rendering matplotlib charts in the
-                browser.
+                This page provides a Python editor to explore my running data! Example row:
               </p>
+              <pre className="text-gray-900 font-mono border border-dotted border-gray-900">
+              {`{
+  project: 'callum_runs_prod_v6',
+  timestamp: 1627544381,
+  datetime: <native Python datetime>,
+  kcal: 368.791,
+  activity_type: 'Running',
+  distance_km: 5.292,
+  duration_mins_f: 32.8,
+  pace_mins_per_km: 6.2,
+  elevation_ascended_m: 31.27,
+  elevation_maximum_m: 45.577,
+  elevation_minimum_m: 13.099,
+  heart_rate_a: 0,
+  heart_rate_b: 0,
+  heart_rate_c: 0.147,
+  heart_rate_d: 0.853,
+  heart_rate_e: 0,
+  heart_rate_avg_rounded_i: 164,
+  heart_rate_max: 172,
+  mets_average: 10.608
+}`}
+              </pre>
             </div>
           </main>
 
           <div>
-            <label className="block pb-4 text-sm font-medium text-gray-700 dark:text-gray-450">
-              Python
-            </label>
-
             <div className="mt-1 dark:text-gray-450">
               <Editor
                 height="20rem"
