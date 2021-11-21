@@ -106,8 +106,9 @@ type GraphJSONSamplePayload = {
 
 type GraphJSONEventPayload = {
   api_key: string,
-  json: string,
+  collection: string,
   timestamp: number,
+  json: string,
 }
 
 type GraphJSONVisualiseIframeResponse = {
@@ -123,6 +124,7 @@ type GraphJSONDataResponse = {
   ]
 }
 
+// Note: Can remove this when I have data imported into collections
 const projectFilter = (project: string): GraphJSONFilter =>
   ["project", "=", project]
 
@@ -398,8 +400,9 @@ export const getRunSamples = async (apiKey: string, runsProject: string, startDa
 export const logEvent = async (event: GraphJSONEvent, apiKey: string): Promise<void> => {
   const payload: GraphJSONEventPayload = {
     api_key: apiKey,
+    collection: event.collection,
+    timestamp: event.timestamp,
     json: JSON.stringify(event),
-    timestamp: event.timestamp
   }
 
   const result = await fetch('https://www.graphjson.com/api/log', {

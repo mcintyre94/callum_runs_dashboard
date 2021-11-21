@@ -1,5 +1,5 @@
 export type ActivityEvent = {
-  project: string;
+  collection: string;
   timestamp: number;
   kcal: number;
   activity_type: string;
@@ -20,7 +20,7 @@ export type ActivityEvent = {
 };
 
 export type ZoneEvent = {
-  project: string;
+  collection: string;
   timestamp: number;
   zone: string;
   value: number;

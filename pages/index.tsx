@@ -1,21 +1,21 @@
 import Head from 'next/head'
-import { getGraphJSONApiKey, getGraphJSONProjectRuns, getGraphJSONProjectZones } from '../lib/env';
+import { getGraphJSONApiKey, getGraphJSONCollectionRuns, getGraphJSONCollectionZones } from '../lib/env';
 import * as graphjson from '../lib/graphjson';
 
 export async function getStaticProps() {
   const apiKey = getGraphJSONApiKey()
-  const graphJSONProjectRuns = getGraphJSONProjectRuns()
-  const graphJSONProjectZones = getGraphJSONProjectZones()
+  const graphJSONCollectionRuns = getGraphJSONCollectionRuns()
+  const graphJSONCollectionZones = getGraphJSONCollectionZones()
 
-  const cumulativeDistanceIframeURL = await graphjson.makeCumulativeDistanceMonthIframeURL(apiKey, graphJSONProjectRuns)
-  const cumulativeDurationIframeURL = await graphjson.makeCumulativeDurationMonthIframeURL(apiKey, graphJSONProjectRuns)
-  const heartRateZonesIframeURL = await graphjson.makeHeartRateZonesMonthIframeURL(apiKey, graphJSONProjectZones)
+  const cumulativeDistanceIframeURL = await graphjson.makeCumulativeDistanceMonthIframeURL(apiKey, graphJSONCollectionRuns)
+  const cumulativeDurationIframeURL = await graphjson.makeCumulativeDurationMonthIframeURL(apiKey, graphJSONCollectionRuns)
+  const heartRateZonesIframeURL = await graphjson.makeHeartRateZonesMonthIframeURL(apiKey, graphJSONCollectionZones)
 
-  const distanceOverTimeIframeURL = await graphjson.makeDistanceOverTimeIframeURL(apiKey, graphJSONProjectRuns)
-  const durationOverTimeIframeURL = await graphjson.makeDurationOverTimeIframeURL(apiKey, graphJSONProjectRuns)
-  const paceOverTimeIframeURL = await graphjson.makePaceOverTimeIframeURL(apiKey, graphJSONProjectRuns)
-  const heartRateOverTimeIframeURL = await graphjson.makeHeartRateOverTimeIframeURL(apiKey, graphJSONProjectRuns)
-  const heartRateZonesOverTimeIframeURL = await graphjson.makeHeartRateZonesOverTimeIframeURL(apiKey, graphJSONProjectZones)
+  const distanceOverTimeIframeURL = await graphjson.makeDistanceOverTimeIframeURL(apiKey, graphJSONCollectionRuns)
+  const durationOverTimeIframeURL = await graphjson.makeDurationOverTimeIframeURL(apiKey, graphJSONCollectionRuns)
+  const paceOverTimeIframeURL = await graphjson.makePaceOverTimeIframeURL(apiKey, graphJSONCollectionRuns)
+  const heartRateOverTimeIframeURL = await graphjson.makeHeartRateOverTimeIframeURL(apiKey, graphJSONCollectionRuns)
+  const heartRateZonesOverTimeIframeURL = await graphjson.makeHeartRateZonesOverTimeIframeURL(apiKey, graphJSONCollectionZones)
 
   return {
     props: {

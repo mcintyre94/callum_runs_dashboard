@@ -1,4 +1,5 @@
-import { ActivityEvent, dateRangeToTimestamp, getExistingGraphJSONTimestamps, HealthExportRow, toActivityEvent, toZoneEvents, ZoneEvent } from '../pages/api/import'
+import { dateRangeToTimestamp, getExistingGraphJSONTimestamps, HealthExportRow, toActivityEvent, toZoneEvents } from '../pages/api/import'
+import type { ActivityEvent, ZoneEvent } from '../lib/event'
 import * as graphjson from '../lib/graphjson'
 
 test('Converts a date range string to a timestamp', () => {
@@ -41,13 +42,13 @@ test('Gets the current timestamps from GraphJSON', async () => {
   ]
 
   const apiKey = "apiKey"
-  const projectRuns = "projectRuns"
+  const collection = "collectionRuns"
 
-  const timestamps = await getExistingGraphJSONTimestamps(data, apiKey, projectRuns)
+  const timestamps = await getExistingGraphJSONTimestamps(data, apiKey, collection)
   expect(timestamps).toStrictEqual(new Set([1234, 4567, 6789]))
 
   // Should have requested with correct start/end date derived from input
-  expect(graphjson.getRunSamples).toHaveBeenCalledWith(apiKey, projectRuns, "2021-10-04T00:00:00.000+00:00", "2021-10-09T23:59:59.999+00:00")
+  expect(graphjson.getRunSamples).toHaveBeenCalledWith(apiKey, collection, "2021-10-04T00:00:00.000+00:00", "2021-10-09T23:59:59.999+00:00")
 })
 
 describe('toActivityEvent', () => {
@@ -72,10 +73,10 @@ describe('toActivityEvent', () => {
       'Weather: Humidity(%)': null,
       'Weather: Temperature(degC)': null
     }
-    const project = 'projectRuns'
-    const converted = toActivityEvent(data, project)
+    const collection = 'collectionRuns'
+    const converted = toActivityEvent(data, collection)
     const expected: ActivityEvent = {
-      project,
+      collection,
       timestamp: 1633782798,
       kcal: 584.462,
       activity_type: 'Running',
@@ -118,10 +119,10 @@ describe('toActivityEvent', () => {
       'Weather: Humidity(%)': null,
       'Weather: Temperature(degC)': null
     }
-    const project = 'projectRuns'
-    const converted = toActivityEvent(data, project)
+    const collection = 'collectionRuns'
+    const converted = toActivityEvent(data, collection)
     const expected: ActivityEvent = {
-      project,
+      collection,
       timestamp: 1632588899,
       kcal: 553.317,
       activity_type: 'Running',
@@ -146,7 +147,7 @@ describe('toActivityEvent', () => {
 
 test('Convert an activity event to correct zone events', () => {
   const event: ActivityEvent = {
-    project: 'callum_runs_dev',
+    collection: 'callum_runs_dev',
     timestamp: 1633782798,
     kcal: 584.462,
     activity_type: 'Running',
@@ -165,35 +166,35 @@ test('Convert an activity event to correct zone events', () => {
     heart_rate_max: 172,
     mets_average: 11.522
   }
-  const project = 'projectZones'
-  const converted = toZoneEvents(event, project)
+  const collection = 'collectionZones'
+  const converted = toZoneEvents(event, collection)
   const expected: ZoneEvent[] = [
     {
-      project,
+      collection,
       timestamp: 1633782798,
       zone: 'Easy (A)',
       value: 0.2,
     },
     {
-      project,
+      collection,
       timestamp: 1633782798,
       zone: 'Fat Burn (B)',
       value: 0,
     },
     {
-      project,
+      collection,
       timestamp: 1633782798,
       zone: 'Build Fitness (C)',
       value: 9.1,
     },
     {
-      project,
+      collection,
       timestamp: 1633782798,
       zone: 'Training (D)',
       value: 90.7,
     },
     {
-      project,
+      collection,
       timestamp: 1633782798,
       zone: 'Extreme (E)',
       value: 0,

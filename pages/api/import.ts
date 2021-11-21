@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { DateTime } from 'luxon'
 import Papa from 'papaparse'
 import { Decimal } from 'decimal.js-light'
-import { getGraphJSONApiKey, getGraphJSONProjectRuns, getGraphJSONProjectZones, getImportApiKey } from '../../lib/env';
+import { getGraphJSONApiKey, getGraphJSONCollectionRuns, getGraphJSONCollectionZones, getImportApiKey } from '../../lib/env';
 import { getRunSamples, logEvent } from '../../lib/graphjson'
 import type { ActivityEvent, GraphJSONEvent, ZoneEvent } from '../../lib/event';
 import formidable from "formidable";
@@ -53,15 +53,15 @@ const getStartDateUTC = (dateRange: string): DateTime => {
  * Get the timestamps of runs that are already logged, to be used for de-duping
  * @param data Rows of health export data
  * @param graphJSONApiKey API key for GraphJSON
- * @param graphJSONProjectRuns Project used in GraphJSON to record runs
+ * @param graphJSONCollectionRuns Collection used in GraphJSON to record runs
  * @returns The set of timestamps already recorded
  */
-export const getExistingGraphJSONTimestamps = async (data: HealthExportRow[], graphJSONApiKey: string, graphJSONProjectRuns: string): Promise<Set<number>> => {
+export const getExistingGraphJSONTimestamps = async (data: HealthExportRow[], graphJSONApiKey: string, graphJSONCollectionRuns: string): Promise<Set<number>> => {
   // Get a date before the first activity + after the last
   const earliestStartDate = getStartDateUTC(data[0].Date).startOf("day").toISO()
   const latestStartDate = getStartDateUTC(data[data.length-1].Date).endOf("day").toISO()
   // Query GraphJSON for data between those dates
-  const samples = await getRunSamples(graphJSONApiKey, graphJSONProjectRuns, earliestStartDate, latestStartDate)
+  const samples = await getRunSamples(graphJSONApiKey, graphJSONCollectionRuns, earliestStartDate, latestStartDate)
   return new Set(samples.map(s => s.timestamp))
 }
 
@@ -78,16 +78,16 @@ export const dateRangeToTimestamp = (dateRange: string): number => {
 /**
  * Convert a health export row to an activity event
  * @param row Health Export row describing a single activity
- * @param graphJSONProjectRuns GraphJSON runs project
+ * @param graphJSONCollectionRuns GraphJSON runs collection
  * @returns Activity event object to upload to GraphJSON
  */
-export const toActivityEvent = (row: HealthExportRow, graphJSONProjectRuns: string):  ActivityEvent => {
+export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: string):  ActivityEvent => {
   const timestamp = dateRangeToTimestamp(row.Date)
   const durationMins = new Decimal(row['Duration(s)']).dividedBy(60)
   const paceMinsPerKm = durationMins.dividedBy(row['Distance(km)']).toDecimalPlaces(2).toNumber()
 
   return {
-    project: graphJSONProjectRuns,
+    collection: graphJSONCollectionRuns,
     timestamp,
     kcal: row['Active energy burned(kcal)'],
     activity_type: row.Activity,
@@ -111,33 +111,33 @@ export const toActivityEvent = (row: HealthExportRow, graphJSONProjectRuns: stri
 const convertToPercentage = (zoneValue: number): number =>
   new Decimal(zoneValue).times(100).toDecimalPlaces(1).toNumber()
 
-export const toZoneEvents = (event: ActivityEvent, graphJSONProjectZones: string): ZoneEvent[] => [
+export const toZoneEvents = (event: ActivityEvent, graphJSONCollectionZones: string): ZoneEvent[] => [
   {
-    project: graphJSONProjectZones,
+    collection: graphJSONCollectionZones,
     timestamp: event.timestamp,
     zone: 'Easy (A)',
     value: convertToPercentage(event.heart_rate_a),
   },
   {
-    project: graphJSONProjectZones,
+    collection: graphJSONCollectionZones,
     timestamp: event.timestamp,
     zone: 'Fat Burn (B)',
     value: convertToPercentage(event.heart_rate_b),
   },
   {
-    project: graphJSONProjectZones,
+    collection: graphJSONCollectionZones,
     timestamp: event.timestamp,
     zone: 'Build Fitness (C)',
     value: convertToPercentage(event.heart_rate_c),
   },
   {
-    project: graphJSONProjectZones,
+    collection: graphJSONCollectionZones,
     timestamp: event.timestamp,
     zone: 'Training (D)',
     value: convertToPercentage(event.heart_rate_d),
   },
   {
-    project: graphJSONProjectZones,
+    collection: graphJSONCollectionZones,
     timestamp: event.timestamp,
     zone: 'Extreme (E)',
     value: convertToPercentage(event.heart_rate_e),
@@ -166,8 +166,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Pa
   }
 
   const graphJSONApiKey = getGraphJSONApiKey()
-  const graphJSONProjectRuns = getGraphJSONProjectRuns()
-  const graphJSONProjectZones = getGraphJSONProjectZones()
+  const graphJSONCollectionRuns = getGraphJSONCollectionRuns()
+  const graphJSONCollectionZones = getGraphJSONCollectionZones()
 
   const csvData = await parseForm(req)
 
@@ -182,15 +182,15 @@ async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Pa
 
   const runsData = data.filter(d => d.Activity == 'Running');
 
-  const existingTimestamps = await getExistingGraphJSONTimestamps(runsData, graphJSONApiKey, graphJSONProjectRuns)
+  const existingTimestamps = await getExistingGraphJSONTimestamps(runsData, graphJSONApiKey, graphJSONCollectionRuns)
   console.log('existingTimestamps', existingTimestamps)
 
   const eventsToLog: GraphJSONEvent[] = runsData.flatMap(data => {
-    const activityEvent = toActivityEvent(data, graphJSONProjectRuns)
+    const activityEvent = toActivityEvent(data, graphJSONCollectionRuns)
     if(existingTimestamps.has(activityEvent.timestamp)) {
       return [] // don't generate any events when it matches an existing timestamp
     } else {
-      const zoneEvents = toZoneEvents(activityEvent, graphJSONProjectZones)
+      const zoneEvents = toZoneEvents(activityEvent, graphJSONCollectionZones)
       return [activityEvent, ...zoneEvents]
     }
   })

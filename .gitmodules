@@ -1,3 +1,0 @@
-[submodule "run-wasm"]
-	path = run-wasm
-	url = https://github.com/slipHQ/run-wasm.git
