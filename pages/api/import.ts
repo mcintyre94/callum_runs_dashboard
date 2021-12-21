@@ -11,20 +11,20 @@ import formidable from "formidable";
 // This maps to the HealthExport CSV file, hence the terrible field names!
 export type HealthExportRow = {
   Date: string // eg. 2021-10-04 08:07:18 - 2021-10-04 08:40:04
-  'Active energy burned(kcal)': number // eg. 364.671
+  'Active energy burned(kcal)': number | null // eg. 364.671
   Activity: string // eg. Running
   'Distance(km)': number // eg. 5.202
   'Duration(s)': number // eg. 1966.157
   'Elevation: Ascended(m)': number | null // eg. 36.58
   'Elevation: Maximum(m)': number | null // eg. 45.724
   'Elevation: Minimum(m)': number | null // eg. 13.158
-  'Heart rate zone: A Easy (<115bpm)(%)': number // eg. 0
-  'Heart rate zone: B Fat Burn (115-135bpm)(%)': number // eg. 0.01
-  'Heart rate zone: C Moderate Training (135-155bpm)(%)': number // eg. 0.129
-  'Heart rate zone: D Hard Training (155-175bpm)(%)': number // eg. 0.861
-  'Heart rate zone: E Extreme Training (>175bpm)(%)': number // eg. 0
-  'Heart rate: Average(count/min)': number // eg. 160.121
-  'Heart rate: Maximum(count/min)': number // eg. 169
+  'Heart rate zone: A Easy (<115bpm)(%)': number | null // eg. 0
+  'Heart rate zone: B Fat Burn (115-135bpm)(%)': number | null // eg. 0.01
+  'Heart rate zone: C Moderate Training (135-155bpm)(%)': number | null // eg. 0.129
+  'Heart rate zone: D Hard Training (155-175bpm)(%)': number | null // eg. 0.861
+  'Heart rate zone: E Extreme Training (>175bpm)(%)': number | null // eg. 0
+  'Heart rate: Average(count/min)': number | null // eg. 160.121
+  'Heart rate: Maximum(count/min)': number | null // eg. 169
   'METs Average(kcal/hr·kg)': number | null // eg. 11.289
   'Weather: Humidity(%)': number | null // eg. 93, but always null for runs for some reason
   'Weather: Temperature(degC)': number | null // eg. 11, but always null for runs for some reason
@@ -86,6 +86,10 @@ export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: s
   const durationMins = new Decimal(row['Duration(s)']).dividedBy(60)
   const paceMinsPerKm = durationMins.dividedBy(row['Distance(km)']).toDecimalPlaces(2).toNumber()
 
+  if(row['Heart rate: Average(count/min)'] === null) {
+    row['Heart rate: Average(count/min)'] = 0
+  }
+
   return {
     collection: graphJSONCollectionRuns,
     // TODO: can remove this when we move fully to collections
@@ -110,8 +114,12 @@ export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: s
   }
 }
 
-const convertToPercentage = (zoneValue: number): number =>
+const convertToPercentage = (zoneValue: number | null): number => {
+  if(zoneValue === null) {
+    return 0
+  }
   new Decimal(zoneValue).times(100).toDecimalPlaces(1).toNumber()
+}
 
 export const toZoneEvents = (event: ActivityEvent, graphJSONCollectionZones: string): ZoneEvent[] => [
   {
@@ -152,6 +160,8 @@ export const toZoneEvents = (event: ActivityEvent, graphJSONCollectionZones: str
 ]
 
 async function parseForm(req: NextApiRequest): Promise<string> {
+  console.log("req.body", req.body)
+
   const form = formidable()
   const csvData: string = await new Promise(function (resolve, reject) {
     form.parse(req, function (err, fields, _files) {
@@ -159,6 +169,7 @@ async function parseForm(req: NextApiRequest): Promise<string> {
         reject(err)
         return
       }
+      console.log("fields", fields);
       resolve(fields.csvData as string)
     })
   })
@@ -177,17 +188,23 @@ async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Pa
   const graphJSONCollectionZones = getGraphJSONCollectionZones()
 
   const csvData = await parseForm(req)
+  console.log("csvData", csvData);
 
   const { data, errors } = Papa.parse<HealthExportRow>(csvData, {
     header: true,
     dynamicTyping: true,
   });
 
+  console.log("data", data)
+  console.log("errors", errors) 
+
   if(errors.length > 0) {
     return res.status(400).json(errors)
   }
 
   const runsData = data.filter(d => d.Activity == 'Running');
+
+  console.log("runsData", runsData);
 
   const existingTimestamps = await getExistingGraphJSONTimestamps(runsData, graphJSONApiKey, graphJSONCollectionRuns)
   console.log('existingTimestamps', existingTimestamps)
@@ -197,12 +214,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Pa
     if(existingTimestamps.has(activityEvent.timestamp)) {
       return [] // don't generate any events when it matches an existing timestamp
     } else {
-      const zoneEvents = toZoneEvents(activityEvent, graphJSONCollectionZones)
+      const zoneEvents = [] // toZoneEvents(activityEvent, graphJSONCollectionZones)
       return [activityEvent, ...zoneEvents]
     }
   })
 
-  for(const event of eventsToLog) await logEvent(event, graphJSONApiKey)
+  // for(const event of eventsToLog) await logEvent(event, graphJSONApiKey)
+
+  console.log(eventsToLog);
 
   const response: OutputData = {
     loggedCount: eventsToLog.length,
