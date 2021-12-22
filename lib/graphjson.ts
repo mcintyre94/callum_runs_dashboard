@@ -39,7 +39,8 @@ enum Aggregation {
 export enum Time {
   OneMonthAgo = '1 month ago',
   Now = 'now',
-  Start2020 = '01/01/2020 0:00 am'
+  Start2020 = '01/01/2020 0:00 am',
+  StartJuly2021 = '07/01/2021 0:00 am',
 }
 
 enum Granularity {
@@ -371,6 +372,34 @@ export const makeHeartRateZonesOverTimeIframeURL = async (apiKey: string, zonesP
       title: 'Heart Rate Zones',
       metric: MetricLabel.Proportion,
       value_suffix: Suffix.Percent,
+    }
+  }
+
+  return requestIframeURL(payload);
+}
+
+export const makeCumulativeDistanceOverTimeIframeURL = async (apiKey: string, runsProject: string) => {
+  const payload: GraphJSONPayload = {
+    api_key: apiKey,
+    IANA_time_zone: Timezone.London,
+    graph_type: GraphType.CumulativeLine,
+    start: Time.StartJuly2021,
+    end: Time.Now,
+    filters: [projectFilter(runsProject)],
+    metric: Metric.DistanceKm,
+    aggregation: Aggregation.Sum,
+    granularity: Granularity.Day,
+    customizations: {
+      lineColor: LineColour.Distance,
+      hideMissing: false,
+      hideSummary: false,
+      hideToolTip: false,
+      showDots: false,
+      hideXAxis: false,
+      showYAxis: true,
+      title: 'Total Distance In Streak',
+      metric: MetricLabel.Distance,
+      value_suffix: Suffix.Km,
     }
   }
 
