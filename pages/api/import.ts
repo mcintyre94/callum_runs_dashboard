@@ -57,6 +57,8 @@ const getStartDateUTC = (dateRange: string): DateTime => {
  * @returns The set of timestamps already recorded
  */
 export const getExistingGraphJSONTimestamps = async (data: HealthExportRow[], graphJSONApiKey: string, graphJSONCollectionRuns: string): Promise<Set<number>> => {
+  if(data.length === 0) return new Set();
+  
   // Get a date before the first activity + after the last
   const earliestStartDate = getStartDateUTC(data[0].Date).startOf("day").toISO()
   const latestStartDate = getStartDateUTC(data[data.length-1].Date).endOf("day").toISO()
