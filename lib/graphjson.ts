@@ -1,4 +1,5 @@
 import type { GraphJSONEvent } from "./event"
+import { DateTime } from "luxon"
 
 enum LineColour {
   Distance = '#0345fc',
@@ -43,6 +44,8 @@ export enum Time {
   StartJuly2021 = '07/01/2021 0:00 am',
 }
 
+const startOfMonth = DateTime.local().startOf('month').toString();
+
 enum Granularity {
   Day = 'Day',
 }
@@ -84,7 +87,7 @@ type GraphJSONPayload = {
   api_key: string,
   IANA_time_zone: string,
   graph_type: GraphType,
-  start: Time,
+  start: Time | typeof startOfMonth,
   end: Time,
   compare?: Time,
   filters: GraphJSONFilter[],
@@ -155,7 +158,7 @@ export const makeCumulativeDistanceMonthIframeURL = async (apiKey: string, runsP
     api_key: apiKey,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.CumulativeLine,
-    start: Time.OneMonthAgo,
+    start: startOfMonth,
     end: Time.Now,
     compare: Time.OneMonthAgo,
     filters: [projectFilter(runsProject)],
@@ -185,7 +188,7 @@ export const makeCumulativeDurationMonthIframeURL = async (apiKey: string, runsP
     api_key: apiKey,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.CumulativeLine,
-    start: Time.OneMonthAgo,
+    start: startOfMonth,
     end: Time.Now,
     compare: Time.OneMonthAgo,
     filters: [projectFilter(runsProject)],
@@ -215,7 +218,7 @@ export const makeHeartRateZonesMonthIframeURL = async (apiKey: string, zonesProj
     api_key: apiKey,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.StackedLine,
-    start: Time.OneMonthAgo,
+    start: startOfMonth,
     end: Time.Now,
     filters: [projectFilter(zonesProject)],
     metric: Metric.ZoneValue,
@@ -229,7 +232,7 @@ export const makeHeartRateZonesMonthIframeURL = async (apiKey: string, zonesProj
       showDots: true,
       hideXAxis: false,
       showYAxis: false,
-      title: 'Heart Rate Zones (Last month)',
+      title: 'Heart Rate Zones (this month)',
       metric: MetricLabel.Proportion,
       value_suffix: Suffix.Percent,
     }
@@ -257,7 +260,7 @@ export const makeDistanceOverTimeIframeURL = async (apiKey: string, runsProject:
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Distance (km)',
+      title: 'Distance (km) this month',
       metric: MetricLabel.Distance,
       value_suffix: Suffix.Km,
     }
