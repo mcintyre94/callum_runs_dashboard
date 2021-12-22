@@ -86,9 +86,8 @@ export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: s
   const durationMins = new Decimal(row['Duration(s)']).dividedBy(60)
   const paceMinsPerKm = durationMins.dividedBy(row['Distance(km)']).toDecimalPlaces(2).toNumber()
 
-  if(row['Heart rate: Average(count/min)'] === null) {
-    row['Heart rate: Average(count/min)'] = 0
-  }
+  const averageHeartRateRounded = row['Heart rate: Average(count/min)'] === null ? 
+    null : new Decimal(row['Heart rate: Average(count/min)']).toInteger().toNumber()
 
   return {
     collection: graphJSONCollectionRuns,
@@ -100,25 +99,25 @@ export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: s
     distance_km: row['Distance(km)'],
     duration_mins_f: durationMins.toDecimalPlaces(1).toNumber(),
     pace_mins_per_km: paceMinsPerKm,
-    elevation_ascended_m: row['Elevation: Ascended(m)'] ?? 0,
-    elevation_maximum_m: row['Elevation: Maximum(m)'] ?? 0,
-    elevation_minimum_m: row['Elevation: Minimum(m)'] ?? 0,
+    elevation_ascended_m: row['Elevation: Ascended(m)'],
+    elevation_maximum_m: row['Elevation: Maximum(m)'],
+    elevation_minimum_m: row['Elevation: Minimum(m)'],
     heart_rate_a: row['Heart rate zone: A Easy (<115bpm)(%)'],
     heart_rate_b: row['Heart rate zone: B Fat Burn (115-135bpm)(%)'],
     heart_rate_c: row['Heart rate zone: C Moderate Training (135-155bpm)(%)'],
     heart_rate_d: row['Heart rate zone: D Hard Training (155-175bpm)(%)'],
     heart_rate_e: row['Heart rate zone: E Extreme Training (>175bpm)(%)'],
-    heart_rate_avg_rounded_i: new Decimal(row['Heart rate: Average(count/min)']).toInteger().toNumber(),
+    heart_rate_avg_rounded_i: averageHeartRateRounded,
     heart_rate_max: row['Heart rate: Maximum(count/min)'],
-    mets_average: row['METs Average(kcal/hr·kg)'] ?? 0,
+    mets_average: row['METs Average(kcal/hr·kg)'],
   }
 }
 
 const convertToPercentage = (zoneValue: number | null): number => {
   if(zoneValue === null) {
-    return 0
+    return null
   }
-  new Decimal(zoneValue).times(100).toDecimalPlaces(1).toNumber()
+  return new Decimal(zoneValue).times(100).toDecimalPlaces(1).toNumber()
 }
 
 export const toZoneEvents = (event: ActivityEvent, graphJSONCollectionZones: string): ZoneEvent[] => [
@@ -160,8 +159,6 @@ export const toZoneEvents = (event: ActivityEvent, graphJSONCollectionZones: str
 ]
 
 async function parseForm(req: NextApiRequest): Promise<string> {
-  console.log("req.body", req.body)
-
   const form = formidable()
   const csvData: string = await new Promise(function (resolve, reject) {
     form.parse(req, function (err, fields, _files) {
@@ -169,7 +166,6 @@ async function parseForm(req: NextApiRequest): Promise<string> {
         reject(err)
         return
       }
-      console.log("fields", fields);
       resolve(fields.csvData as string)
     })
   })
@@ -188,15 +184,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Pa
   const graphJSONCollectionZones = getGraphJSONCollectionZones()
 
   const csvData = await parseForm(req)
-  console.log("csvData", csvData);
 
   const { data, errors } = Papa.parse<HealthExportRow>(csvData, {
     header: true,
     dynamicTyping: true,
   });
-
-  console.log("data", data)
-  console.log("errors", errors) 
 
   if(errors.length > 0) {
     return res.status(400).json(errors)
@@ -204,24 +196,42 @@ async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Pa
 
   const runsData = data.filter(d => d.Activity == 'Running');
 
-  console.log("runsData", runsData);
+  // Deduplicate new events
+  // if two events start within 10s then they're the same (Strava and Apple Health slightly differ)
+  // to select which to keep, select whichever has Elevation Ascended field - Strava missing this
+  // Note this doesn't dedupe on existing timestamps, that comes later
+  const deduplicatedNewEvents: [number, HealthExportRow][] = [];
+  runsData.forEach(run => {
+    const runTimestamp = dateRangeToTimestamp(run.Date)
+    const foundCloseEventIndex = deduplicatedNewEvents.findIndex(([timestamp, _existingEvent]) =>
+      timestamp >= runTimestamp - 10 && timestamp <= runTimestamp + 10
+    )
+    if(foundCloseEventIndex === -1) {
+      // Keep event, we haven't seen a close timestamp yet
+      deduplicatedNewEvents.push([runTimestamp, run])
+    } else {
+      if(!deduplicatedNewEvents[foundCloseEventIndex][1]['Elevation: Ascended(m)']) {
+        // existing doesn't have elevation, replace it
+        deduplicatedNewEvents[foundCloseEventIndex] = [runTimestamp, run] 
+      }
+    }
+  })
 
   const existingTimestamps = await getExistingGraphJSONTimestamps(runsData, graphJSONApiKey, graphJSONCollectionRuns)
   console.log('existingTimestamps', existingTimestamps)
+  
 
-  const eventsToLog: GraphJSONEvent[] = runsData.flatMap(data => {
+  const eventsToLog: GraphJSONEvent[] = deduplicatedNewEvents.flatMap(([timestamp, data]) => {
     const activityEvent = toActivityEvent(data, graphJSONCollectionRuns)
-    if(existingTimestamps.has(activityEvent.timestamp)) {
+    if(existingTimestamps.has(timestamp)) {
       return [] // don't generate any events when it matches an existing timestamp
     } else {
-      const zoneEvents = [] // toZoneEvents(activityEvent, graphJSONCollectionZones)
+      const zoneEvents = toZoneEvents(activityEvent, graphJSONCollectionZones)
       return [activityEvent, ...zoneEvents]
     }
   })
 
-  // for(const event of eventsToLog) await logEvent(event, graphJSONApiKey)
-
-  console.log(eventsToLog);
+  for(const event of eventsToLog) await logEvent(event, graphJSONApiKey)
 
   const response: OutputData = {
     loggedCount: eventsToLog.length,
