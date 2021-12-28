@@ -173,7 +173,7 @@ export const makeCumulativeDistanceMonthIframeURL = async (apiKey: string, runsP
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Distance (km)',
+      title: 'Distance (km) this month',
       metric: MetricLabel.Distance,
       comparison: ComparisonLabel.LastMonth,
       value_suffix: Suffix.Km,
@@ -203,7 +203,7 @@ export const makeCumulativeDurationMonthIframeURL = async (apiKey: string, runsP
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Duration (mins)',
+      title: 'Duration (mins) this month',
       metric: MetricLabel.Duration,
       comparison: ComparisonLabel.LastMonth,
       value_suffix: Suffix.Mins
@@ -232,7 +232,7 @@ export const makeHeartRateZonesMonthIframeURL = async (apiKey: string, zonesProj
       showDots: true,
       hideXAxis: false,
       showYAxis: false,
-      title: 'Heart Rate Zones (this month)',
+      title: 'Heart Rate Zones this month',
       metric: MetricLabel.Proportion,
       value_suffix: Suffix.Percent,
     }
@@ -260,7 +260,7 @@ export const makeDistanceOverTimeIframeURL = async (apiKey: string, runsProject:
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Distance (km) this month',
+      title: 'Distance (km)',
       metric: MetricLabel.Distance,
       value_suffix: Suffix.Km,
     }

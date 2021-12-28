@@ -75,8 +75,7 @@ export default function Home({ iframeURLs }: HomeProps) {
           <Iframe url={iframeURLs.cumulativeDuration}></Iframe>
         </section>
 
-        <h2 className="prose prose-xl">Day-to-day</h2>
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Iframe url={iframeURLs.distanceOverTime}></Iframe>
           <Iframe url={iframeURLs.durationOverTime}></Iframe>
           <Iframe url={iframeURLs.paceOverTime}></Iframe>
