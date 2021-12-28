@@ -107,8 +107,6 @@ export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: s
 
   return {
     collection: graphJSONCollectionRuns,
-    // TODO: can remove this when we move fully to collections
-    project: graphJSONCollectionRuns,
     timestamp,
     kcal: row['Active energy burned(kcal)'],
     activity_type: row.Activity,
@@ -140,35 +138,30 @@ const convertToPercentage = (zoneValue: number | null): number => {
 export const toZoneEvents = (event: ActivityEvent, graphJSONCollectionZones: string): ZoneEvent[] => [
   {
     collection: graphJSONCollectionZones,
-    project: graphJSONCollectionZones,
     timestamp: event.timestamp,
     zone: 'Easy (A)',
     value: convertToPercentage(event.heart_rate_a),
   },
   {
     collection: graphJSONCollectionZones,
-    project: graphJSONCollectionZones,
     timestamp: event.timestamp,
     zone: 'Fat Burn (B)',
     value: convertToPercentage(event.heart_rate_b),
   },
   {
     collection: graphJSONCollectionZones,
-    project: graphJSONCollectionZones,
     timestamp: event.timestamp,
     zone: 'Build Fitness (C)',
     value: convertToPercentage(event.heart_rate_c),
   },
   {
     collection: graphJSONCollectionZones,
-    project: graphJSONCollectionZones,
     timestamp: event.timestamp,
     zone: 'Training (D)',
     value: convertToPercentage(event.heart_rate_d),
   },
   {
     collection: graphJSONCollectionZones,
-    project: graphJSONCollectionZones,
     timestamp: event.timestamp,
     zone: 'Extreme (E)',
     value: convertToPercentage(event.heart_rate_e),

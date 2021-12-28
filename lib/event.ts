@@ -1,6 +1,5 @@
 export type ActivityEvent = {
   collection: string;
-  project: string; // TODO: remove when migrated to collections
   timestamp: number;
   kcal: number;
   activity_type: string;
@@ -23,7 +22,6 @@ export type ActivityEvent = {
 
 export type ZoneEvent = {
   collection: string;
-  project: string; // TODO: remove when migrated to collections
   timestamp: number;
   zone: string;
   value: number;

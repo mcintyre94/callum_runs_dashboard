@@ -85,6 +85,7 @@ type GraphJSONFilter = [string, string, string]
 
 type GraphJSONPayload = {
   api_key: string,
+  collection: string,
   IANA_time_zone: string,
   graph_type: GraphType,
   start: Time | typeof startOfMonth,
@@ -100,6 +101,7 @@ type GraphJSONPayload = {
 
 type GraphJSONSamplePayload = {
   api_key: string,
+  collection: string,
   IANA_time_zone: string,
   graph_type: GraphType,
   start: string,
@@ -153,15 +155,16 @@ const requestData = async (payload: GraphJSONSamplePayload): Promise<GraphJSONDa
   return jsonResponse
 }
 
-export const makeCumulativeDistanceMonthIframeURL = async (apiKey: string, runsProject: string) => {
+export const makeCumulativeDistanceMonthIframeURL = async (apiKey: string, activitiesCollection: string) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
+    collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.CumulativeLine,
     start: startOfMonth,
     end: Time.Now,
     compare: Time.OneMonthAgo,
-    filters: [projectFilter(runsProject)],
+    filters: [],
     metric: Metric.DistanceKm,
     aggregation: Aggregation.Sum,
     granularity: Granularity.Day,
@@ -183,15 +186,16 @@ export const makeCumulativeDistanceMonthIframeURL = async (apiKey: string, runsP
   return requestIframeURL(payload)
 }
 
-export const makeCumulativeDurationMonthIframeURL = async (apiKey: string, runsProject: string) => {
+export const makeCumulativeDurationMonthIframeURL = async (apiKey: string, activitiesCollection: string) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
+    collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.CumulativeLine,
     start: startOfMonth,
     end: Time.Now,
     compare: Time.OneMonthAgo,
-    filters: [projectFilter(runsProject)],
+    filters: [],
     metric: Metric.DurationsMins,
     aggregation: Aggregation.Sum,
     granularity: Granularity.Day,
@@ -213,14 +217,15 @@ export const makeCumulativeDurationMonthIframeURL = async (apiKey: string, runsP
   return requestIframeURL(payload);
 }
 
-export const makeHeartRateZonesMonthIframeURL = async (apiKey: string, zonesProject: string) => {
+export const makeHeartRateZonesMonthIframeURL = async (apiKey: string, zonesCollection: string) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
+    collection: zonesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.StackedLine,
     start: startOfMonth,
     end: Time.Now,
-    filters: [projectFilter(zonesProject)],
+    filters: [],
     metric: Metric.ZoneValue,
     aggregation: Aggregation.Avg,
     granularity: Granularity.Day,
@@ -241,14 +246,15 @@ export const makeHeartRateZonesMonthIframeURL = async (apiKey: string, zonesProj
   return requestIframeURL(payload);
 }
 
-export const makeDistanceOverTimeIframeURL = async (apiKey: string, runsProject: string) => {
+export const makeDistanceOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
+    collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.SingleLine,
     start: Time.Start2020,
     end: Time.Now,
-    filters: [projectFilter(runsProject)],
+    filters: [],
     metric: Metric.DistanceKm,
     aggregation: Aggregation.Sum,
     granularity: Granularity.Day,
@@ -269,14 +275,15 @@ export const makeDistanceOverTimeIframeURL = async (apiKey: string, runsProject:
   return requestIframeURL(payload);
 }
 
-export const makeDurationOverTimeIframeURL = async (apiKey: string, runsProject: string) => {
+export const makeDurationOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
+    collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.SingleLine,
     start: Time.Start2020,
     end: Time.Now,
-    filters: [projectFilter(runsProject)],
+    filters: [],
     metric: Metric.DurationsMins,
     aggregation: Aggregation.Sum,
     granularity: Granularity.Day,
@@ -297,14 +304,15 @@ export const makeDurationOverTimeIframeURL = async (apiKey: string, runsProject:
   return requestIframeURL(payload);
 }
 
-export const makePaceOverTimeIframeURL = async (apiKey: string, runsProject: string) => {
+export const makePaceOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
+    collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.SingleLine,
     start: Time.Start2020,
     end: Time.Now,
-    filters: [projectFilter(runsProject)],
+    filters: [],
     metric: Metric.PaceMinsPerKm,
     aggregation: Aggregation.Avg,
     granularity: Granularity.Day,
@@ -325,14 +333,15 @@ export const makePaceOverTimeIframeURL = async (apiKey: string, runsProject: str
   return requestIframeURL(payload);
 }
 
-export const makeHeartRateOverTimeIframeURL = async (apiKey: string, runsProject: string) => {
+export const makeHeartRateOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
+    collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.SingleLine,
     start: Time.Start2020,
     end: Time.Now,
-    filters: [projectFilter(runsProject)],
+    filters: [],
     metric: Metric.HeartRateBpm,
     aggregation: Aggregation.Avg,
     granularity: Granularity.Day,
@@ -353,14 +362,15 @@ export const makeHeartRateOverTimeIframeURL = async (apiKey: string, runsProject
   return requestIframeURL(payload);
 }
 
-export const makeHeartRateZonesOverTimeIframeURL = async (apiKey: string, zonesProject: string) => {
+export const makeHeartRateZonesOverTimeIframeURL = async (apiKey: string, zonesCollection: string) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
+    collection: zonesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.StackedLine,
     start: Time.Start2020,
     end: Time.Now,
-    filters: [projectFilter(zonesProject)],
+    filters: [],
     metric: Metric.ZoneValue,
     aggregation: Aggregation.Avg,
     granularity: Granularity.Day,
@@ -381,14 +391,15 @@ export const makeHeartRateZonesOverTimeIframeURL = async (apiKey: string, zonesP
   return requestIframeURL(payload);
 }
 
-export const makeCumulativeDistanceOverTimeIframeURL = async (apiKey: string, runsProject: string) => {
+export const makeCumulativeDistanceOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
+    collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.CumulativeLine,
     start: Time.StartJuly2021,
     end: Time.Now,
-    filters: [projectFilter(runsProject)],
+    filters: [],
     metric: Metric.DistanceKm,
     aggregation: Aggregation.Sum,
     granularity: Granularity.Day,
@@ -414,14 +425,15 @@ export type RunSample = {
   json: Object
 }
 
-export const getRunSamples = async (apiKey: string, runsProject: string, startDate: string, endDate: string): Promise<RunSample[]> => {
+export const getRunSamples = async (apiKey: string, activitiesCollection: string, startDate: string, endDate: string): Promise<RunSample[]> => {
   const payload: GraphJSONSamplePayload = {
     api_key: apiKey,
+    collection: activitiesCollection,
     IANA_time_zone: Timezone.UTC,
     graph_type: GraphType.Samples,
     start: startDate,
     end: endDate,
-    filters: [projectFilter(runsProject)],
+    filters: [],
     customizations: {},
   }
 
