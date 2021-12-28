@@ -6,7 +6,12 @@ import { getGraphJSONApiKey, getGraphJSONCollectionRuns, getGraphJSONCollectionZ
 import { getRunSamples, logEvent } from '../../lib/graphjson'
 import type { ActivityEvent, GraphJSONEvent, ZoneEvent } from '../../lib/event';
 import formidable from "formidable";
+import { scoreRun } from '../../lib/score';
 
+const paceLowerBound = Number(process.env.PACE_LOWER_BOUND);
+const paceUpperBound = Number(process.env.PACE_UPPER_BOUND);
+const hrLowerBound = Number(process.env.HR_LOWER_BOUND);
+const hrUpperBound = Number(process.env.HR_UPPER_BOUND);
 
 // This maps to the HealthExport CSV file, hence the terrible field names!
 export type HealthExportRow = {
@@ -86,10 +91,19 @@ export const dateRangeToTimestamp = (dateRange: string): number => {
 export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: string):  ActivityEvent => {
   const timestamp = dateRangeToTimestamp(row.Date)
   const durationMins = new Decimal(row['Duration(s)']).dividedBy(60)
-  const paceMinsPerKm = durationMins.dividedBy(row['Distance(km)']).toDecimalPlaces(2).toNumber()
-
-  const averageHeartRateRounded = row['Heart rate: Average(count/min)'] === null ? 
-    null : new Decimal(row['Heart rate: Average(count/min)']).toInteger().toNumber()
+  const averagePace = durationMins.dividedBy(row['Distance(km)'])
+  const averageHeartRate = row['Heart rate: Average(count/min)'] === null ? 
+    null : new Decimal(row['Heart rate: Average(count/min)'])
+  
+  const score = averagePace === null || averageHeartRate === null ?
+    null : scoreRun({
+      paceLowerBound,
+      paceUpperBound,
+      hrLowerBound,
+      hrUpperBound,
+      averagePace: averagePace.toNumber(),
+      averageHeartRate: averageHeartRate.toNumber(),
+    })
 
   return {
     collection: graphJSONCollectionRuns,
@@ -100,7 +114,7 @@ export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: s
     activity_type: row.Activity,
     distance_km: row['Distance(km)'],
     duration_mins_f: durationMins.toDecimalPlaces(1).toNumber(),
-    pace_mins_per_km: paceMinsPerKm,
+    pace_mins_per_km: averagePace.toDecimalPlaces(2).toNumber(),
     elevation_ascended_m: row['Elevation: Ascended(m)'],
     elevation_maximum_m: row['Elevation: Maximum(m)'],
     elevation_minimum_m: row['Elevation: Minimum(m)'],
@@ -109,9 +123,10 @@ export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: s
     heart_rate_c: row['Heart rate zone: C Moderate Training (135-155bpm)(%)'],
     heart_rate_d: row['Heart rate zone: D Hard Training (155-175bpm)(%)'],
     heart_rate_e: row['Heart rate zone: E Extreme Training (>175bpm)(%)'],
-    heart_rate_avg_rounded_i: averageHeartRateRounded,
+    heart_rate_avg_rounded_i: averageHeartRate?.toInteger().toNumber(),
     heart_rate_max: row['Heart rate: Maximum(count/min)'],
     mets_average: row['METs Average(kcal/hr·kg)'],
+    score,
   }
 }
 

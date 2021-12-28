@@ -18,6 +18,7 @@ export type ActivityEvent = {
   heart_rate_avg_rounded_i: number;
   heart_rate_max: number;
   mets_average: number;
+  score: number;
 };
 
 export type ZoneEvent = {
