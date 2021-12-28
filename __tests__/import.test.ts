@@ -94,6 +94,7 @@ describe('toActivityEvent', () => {
       heart_rate_avg_rounded_i: 164,
       heart_rate_max: 172,
       mets_average: 11.522,
+      score: 0.2749498002904866,
     }
     expect(converted).toStrictEqual(expected)
   })
@@ -129,7 +130,7 @@ describe('toActivityEvent', () => {
       distance_km: 8.277,
       duration_mins_f: 53.2,
       pace_mins_per_km: 6.43,
-      elevation_ascended_m: 0,
+      elevation_ascended_m: null,
       elevation_maximum_m: 45.596,
       elevation_minimum_m: 13.093,
       heart_rate_a: 0.006,
@@ -139,7 +140,8 @@ describe('toActivityEvent', () => {
       heart_rate_e: 0,
       heart_rate_avg_rounded_i: 157,
       heart_rate_max: 169,
-      mets_average: 0,
+      mets_average: null,
+      score: 0.31818958425623894,
     }
     expect(converted).toStrictEqual(expected)
   })
@@ -164,7 +166,8 @@ test('Convert an activity event to correct zone events', () => {
     heart_rate_e: 0,
     heart_rate_avg_rounded_i: 164,
     heart_rate_max: 172,
-    mets_average: 11.522
+    mets_average: 11.522,
+    score: 0,
   }
   const collection = 'collectionZones'
   const converted = toZoneEvents(event, collection)
