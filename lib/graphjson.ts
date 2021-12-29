@@ -6,6 +6,7 @@ enum LineColour {
   Duration = '#036648',
   Pace = '#ec8d09',
   HeartRate = '#ba040d',
+  Score = '#a809f1',
 }
 
 enum Metric {
@@ -13,6 +14,7 @@ enum Metric {
   DurationsMins = 'duration_mins_f',
   PaceMinsPerKm = 'pace_mins_per_km',
   HeartRateBpm = 'heart_rate_avg_rounded_i',
+  Score = 'score',
   ZoneValue = 'value',
   Zone = 'zone',
 }
@@ -21,6 +23,7 @@ enum MetricLabel {
   Distance = 'Distance',
   Duration = 'Duration',
   Pace = 'Pace',
+  Score = 'Score',
   HeartRate = 'Heart Rate',
   Proportion = 'Proportion',
 }
@@ -40,7 +43,8 @@ enum Aggregation {
 export enum Time {
   OneMonthAgo = '1 month ago',
   Now = 'now',
-  Start2020 = '01/01/2020 0:00 am',
+  // Start2020 = '01/01/2020 0:00 am',
+  Start2021 = '01/01/2021 0:00 am',
   StartJuly2021 = '07/01/2021 0:00 am',
 }
 
@@ -48,6 +52,7 @@ const startOfMonth = DateTime.local().startOf('month').toString();
 
 enum Granularity {
   Day = 'Day',
+  Week = 'Week',
 }
 
 enum Timezone {
@@ -78,7 +83,7 @@ type GraphJSONCustomizations = {
   title: string,
   metric: MetricLabel,
   comparison?: ComparisonLabel,
-  value_suffix: Suffix
+  value_suffix?: Suffix
 }
 
 type GraphJSONFilter = [string, string, string]
@@ -252,7 +257,7 @@ export const makeDistanceOverTimeIframeURL = async (apiKey: string, activitiesCo
     collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.SingleLine,
-    start: Time.Start2020,
+    start: Time.Start2021,
     end: Time.Now,
     filters: [],
     metric: Metric.DistanceKm,
@@ -281,7 +286,7 @@ export const makeDurationOverTimeIframeURL = async (apiKey: string, activitiesCo
     collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.SingleLine,
-    start: Time.Start2020,
+    start: Time.Start2021,
     end: Time.Now,
     filters: [],
     metric: Metric.DurationsMins,
@@ -310,7 +315,7 @@ export const makePaceOverTimeIframeURL = async (apiKey: string, activitiesCollec
     collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.SingleLine,
-    start: Time.Start2020,
+    start: Time.Start2021,
     end: Time.Now,
     filters: [],
     metric: Metric.PaceMinsPerKm,
@@ -339,7 +344,7 @@ export const makeHeartRateOverTimeIframeURL = async (apiKey: string, activitiesC
     collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.SingleLine,
-    start: Time.Start2020,
+    start: Time.Start2021,
     end: Time.Now,
     filters: [],
     metric: Metric.HeartRateBpm,
@@ -368,7 +373,7 @@ export const makeHeartRateZonesOverTimeIframeURL = async (apiKey: string, zonesC
     collection: zonesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.StackedLine,
-    start: Time.Start2020,
+    start: Time.Start2021,
     end: Time.Now,
     filters: [],
     metric: Metric.ZoneValue,
@@ -414,6 +419,34 @@ export const makeCumulativeDistanceOverTimeIframeURL = async (apiKey: string, ac
       title: 'Total Distance In Streak',
       metric: MetricLabel.Distance,
       value_suffix: Suffix.Km,
+    }
+  }
+
+  return requestIframeURL(payload);
+}
+
+export const makeAverageScoreOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
+  const payload: GraphJSONPayload = {
+    api_key: apiKey,
+    collection: activitiesCollection,
+    IANA_time_zone: Timezone.London,
+    graph_type: GraphType.SingleLine,
+    start: Time.Start2021,
+    end: Time.Now,
+    filters: [],
+    metric: Metric.Score,
+    aggregation: Aggregation.Avg,
+    granularity: Granularity.Week,
+    customizations: {
+      lineColor: LineColour.Score,
+      hideMissing: true,
+      hideSummary: false,
+      hideToolTip: false,
+      showDots: true,
+      hideXAxis: false,
+      showYAxis: true,
+      title: 'Average Score',
+      metric: MetricLabel.Score,
     }
   }
 

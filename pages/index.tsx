@@ -18,6 +18,7 @@ export async function getStaticProps() {
   const paceOverTimeIframeURL = await graphjson.makePaceOverTimeIframeURL(apiKey, graphJSONCollectionRuns)
   const heartRateOverTimeIframeURL = await graphjson.makeHeartRateOverTimeIframeURL(apiKey, graphJSONCollectionRuns)
   const heartRateZonesOverTimeIframeURL = await graphjson.makeHeartRateZonesOverTimeIframeURL(apiKey, graphJSONCollectionZones)
+  const scoreOverTimeIframeURL = await graphjson.makeAverageScoreOverTimeIframeURL(apiKey, graphJSONCollectionRuns)
 
   return {
     props: {
@@ -31,6 +32,7 @@ export async function getStaticProps() {
         paceOverTime: paceOverTimeIframeURL,
         heartRateOverTime: heartRateOverTimeIframeURL,
         heartRateZonesOverTime: heartRateZonesOverTimeIframeURL,
+        scoreOverTime: scoreOverTimeIframeURL,
       }
     },
   }
@@ -80,6 +82,7 @@ export default function Home({ iframeURLs }: HomeProps) {
           <Iframe url={iframeURLs.durationOverTime}></Iframe>
           <Iframe url={iframeURLs.paceOverTime}></Iframe>
           <Iframe url={iframeURLs.heartRateOverTime}></Iframe>
+          <Iframe url={iframeURLs.scoreOverTime} />
           <div className="col-span-1 md:col-span-2">
             <Iframe url={iframeURLs.heartRateZonesOverTime}></Iframe>
           </div>
