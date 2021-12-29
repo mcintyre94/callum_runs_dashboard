@@ -50,6 +50,10 @@ export enum Time {
 
 const startOfMonth = DateTime.local().startOf('month').toString();
 
+const nonZeroFilter = (metric: Metric): GraphJSONFilter => (
+  [metric.toString(), ">", "0"]
+);
+
 enum Granularity {
   Day = 'Day',
   Week = 'Week',
@@ -230,7 +234,7 @@ export const makeHeartRateZonesMonthIframeURL = async (apiKey: string, zonesColl
     graph_type: GraphType.StackedLine,
     start: startOfMonth,
     end: Time.Now,
-    filters: [],
+    filters: [nonZeroFilter(Metric.ZoneValue)],
     metric: Metric.ZoneValue,
     aggregation: Aggregation.Avg,
     granularity: Granularity.Day,
@@ -346,7 +350,7 @@ export const makeHeartRateOverTimeIframeURL = async (apiKey: string, activitiesC
     graph_type: GraphType.SingleLine,
     start: Time.Start2021,
     end: Time.Now,
-    filters: [],
+    filters: [nonZeroFilter(Metric.HeartRateBpm)],
     metric: Metric.HeartRateBpm,
     aggregation: Aggregation.Avg,
     granularity: Granularity.Day,
@@ -375,7 +379,7 @@ export const makeHeartRateZonesOverTimeIframeURL = async (apiKey: string, zonesC
     graph_type: GraphType.StackedLine,
     start: Time.Start2021,
     end: Time.Now,
-    filters: [],
+    filters: [nonZeroFilter(Metric.ZoneValue)],
     metric: Metric.ZoneValue,
     aggregation: Aggregation.Avg,
     granularity: Granularity.Day,
