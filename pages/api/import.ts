@@ -121,7 +121,7 @@ export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: s
     heart_rate_c: row['Heart rate zone: C Moderate Training (135-155bpm)(%)'],
     heart_rate_d: row['Heart rate zone: D Hard Training (155-175bpm)(%)'],
     heart_rate_e: row['Heart rate zone: E Extreme Training (>175bpm)(%)'],
-    heart_rate_avg_rounded_i: averageHeartRate?.toInteger().toNumber(),
+    heart_rate_avg_rounded_i: averageHeartRate?.toInteger().toNumber() ?? null,
     heart_rate_max: row['Heart rate: Maximum(count/min)'],
     mets_average: row['METs Average(kcal/hr·kg)'],
     score,
