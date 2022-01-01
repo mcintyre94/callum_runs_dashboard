@@ -1,5 +1,7 @@
 import type { GraphJSONEvent } from "./event"
 import { DateTime } from "luxon"
+import { dailyTargetSqlQuery, weeklyTargetSqlQuery } from "./sqlQueries";
+import type { SQLQuery } from "./sqlQueries";
 
 enum LineColour {
   Distance = '#0345fc',
@@ -26,6 +28,8 @@ enum MetricLabel {
   Score = 'Score',
   HeartRate = 'Heart Rate',
   Proportion = 'Proportion',
+  PerWeekForGoal = 'Per Week For Goal',
+  PerDayForGoal = 'Per Day For Goal',
 }
 
 enum GraphType {
@@ -33,6 +37,7 @@ enum GraphType {
   SingleLine = 'Single Line',
   StackedLine = 'Stacked Line',
   Samples = 'Samples',
+  SingleValue = 'Single Value',
 }
 
 enum Aggregation {
@@ -43,9 +48,10 @@ enum Aggregation {
 export enum Time {
   OneMonthAgo = '1 month ago',
   Now = 'now',
-  // Start2020 = '01/01/2020 0:00 am',
   Start2021 = '01/01/2021 0:00 am',
   StartJuly2021 = '07/01/2021 0:00 am',
+  Start2022 = '01/01/2022 0:00 am',
+  End2022 = '12/31/2021 11:59 pm'
 }
 
 const startOfMonth = DateTime.local().startOf('month').toString();
@@ -70,6 +76,7 @@ enum ComparisonLabel {
 
 enum Suffix {
   Km = 'km',
+  SpaceKm = ' km',
   Mins = 'mins',
   MinsPerKm = 'mins/km',
   Bpm = 'bpm',
@@ -77,7 +84,8 @@ enum Suffix {
 }
 
 type GraphJSONCustomizations = {
-  lineColor?: LineColour
+  lineColor?: LineColour,
+  primaryColor?: LineColour,
   hideMissing: boolean,
   hideSummary: boolean,
   hideToolTip: boolean,
@@ -85,7 +93,7 @@ type GraphJSONCustomizations = {
   hideXAxis: boolean,
   showYAxis: boolean,
   title: string,
-  metric: MetricLabel,
+  metric?: MetricLabel,
   comparison?: ComparisonLabel,
   value_suffix?: Suffix
 }
@@ -119,6 +127,18 @@ type GraphJSONSamplePayload = {
   customizations: {}
 }
 
+type GraphJSONQueryVisualisationPayload = {
+  api_key: string,
+  sql_query: SQLQuery,
+  graph_type: GraphType,
+  customizations: {
+    primaryColor: LineColour,
+    metric: MetricLabel,
+    value_suffix: Suffix,
+  },
+  value_column: string,
+}
+
 type GraphJSONEventPayload = {
   api_key: string,
   collection: string,
@@ -139,11 +159,7 @@ type GraphJSONDataResponse = {
   ]
 }
 
-// Note: Can remove this when I have data imported into collections
-const projectFilter = (project: string): GraphJSONFilter =>
-  ["project", "=", project]
-
-const requestIframeURL = async (payload: GraphJSONPayload) => {
+const requestIframeURL = async (payload: GraphJSONPayload | GraphJSONQueryVisualisationPayload) => {
   const response = await fetch('https://www.graphjson.com/api/visualize/iframe', {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -163,6 +179,37 @@ const requestData = async (payload: GraphJSONSamplePayload): Promise<GraphJSONDa
   const jsonResponse: GraphJSONDataResponse = await response.json()
   return jsonResponse
 }
+
+
+export const makeCumulativeDistanceYearIframeURL = async (apiKey: string, activitiesCollection: string) => {
+  const payload: GraphJSONPayload = {
+    api_key: apiKey,
+    collection: activitiesCollection,
+    IANA_time_zone: Timezone.London,
+    graph_type: GraphType.CumulativeLine,
+    start: Time.Start2022,
+    end: Time.Now,
+    filters: [],
+    metric: Metric.DistanceKm,
+    aggregation: Aggregation.Sum,
+    granularity: Granularity.Day,
+    customizations: {
+      lineColor: LineColour.Distance,
+      hideMissing: false,
+      hideSummary: false,
+      hideToolTip: false,
+      showDots: false,
+      hideXAxis: false,
+      showYAxis: true,
+      title: 'Total Distance',
+      metric: MetricLabel.Distance,
+      value_suffix: Suffix.Km,
+    }
+  }
+
+  return requestIframeURL(payload);
+}
+
 
 export const makeCumulativeDistanceMonthIframeURL = async (apiKey: string, activitiesCollection: string) => {
   const payload: GraphJSONPayload = {
@@ -254,6 +301,39 @@ export const makeHeartRateZonesMonthIframeURL = async (apiKey: string, zonesColl
 
   return requestIframeURL(payload);
 }
+
+
+export const makeScoreMonthIframeURL = async (apiKey: string, activitiesCollection: string) => {
+  const payload: GraphJSONPayload = {
+    api_key: apiKey,
+    collection: activitiesCollection,
+    IANA_time_zone: Timezone.London,
+    graph_type: GraphType.SingleLine,
+    start: startOfMonth,
+    end: Time.Now,
+    compare: Time.OneMonthAgo,
+    filters: [],
+    metric: Metric.Score,
+    aggregation: Aggregation.Avg,
+    granularity: Granularity.Day,
+    customizations: {
+      lineColor: LineColour.Score,
+      hideMissing: false,
+      hideSummary: false,
+      hideToolTip: false,
+      showDots: true,
+      hideXAxis: false,
+      showYAxis: true,
+      title: 'Score this month',
+      // metric: MetricLabel.Duration,
+      comparison: ComparisonLabel.LastMonth,
+      // value_suffix: Suffix.Mins
+    }
+  }
+
+  return requestIframeURL(payload);
+}
+
 
 export const makeDistanceOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
   const payload: GraphJSONPayload = {
@@ -456,6 +536,39 @@ export const makeAverageScoreOverTimeIframeURL = async (apiKey: string, activiti
 
   return requestIframeURL(payload);
 }
+
+export const makeWeeklyTargetIframeURL = async (apiKey: string) => {
+  const payload: GraphJSONQueryVisualisationPayload = {
+    api_key: apiKey,
+    sql_query: weeklyTargetSqlQuery,
+    graph_type: GraphType.SingleValue,
+    customizations: {
+      primaryColor: LineColour.Distance,
+      metric: MetricLabel.PerWeekForGoal,
+      value_suffix: Suffix.SpaceKm,
+    },
+    value_column: "weekly_required",
+  }
+
+  return requestIframeURL(payload);
+}
+
+export const makeDailyTargetIframeURL = async (apiKey: string) => {
+  const payload: GraphJSONQueryVisualisationPayload = {
+    api_key: apiKey,
+    sql_query: dailyTargetSqlQuery,
+    graph_type: GraphType.SingleValue,
+    customizations: {
+      primaryColor: LineColour.Distance,
+      metric: MetricLabel.PerDayForGoal,
+      value_suffix: Suffix.SpaceKm,
+    },
+    value_column: "daily_required",
+  }
+
+  return requestIframeURL(payload);
+}
+
 
 export type RunSample = {
   timestamp: number
