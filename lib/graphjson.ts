@@ -346,16 +346,16 @@ export const makeDistanceOverTimeIframeURL = async (apiKey: string, activitiesCo
     filters: [],
     metric: Metric.DistanceKm,
     aggregation: Aggregation.Sum,
-    granularity: Granularity.Day,
+    granularity: Granularity.Week,
     customizations: {
       lineColor: LineColour.Distance,
-      hideMissing: true,
+      hideMissing: false,
       hideSummary: false,
       hideToolTip: false,
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Distance (km)',
+      title: 'Distance per week',
       metric: MetricLabel.Distance,
       value_suffix: Suffix.Km,
     }
@@ -375,16 +375,16 @@ export const makeDurationOverTimeIframeURL = async (apiKey: string, activitiesCo
     filters: [],
     metric: Metric.DurationsMins,
     aggregation: Aggregation.Sum,
-    granularity: Granularity.Day,
+    granularity: Granularity.Week,
     customizations: {
       lineColor: LineColour.Duration,
-      hideMissing: true,
+      hideMissing: false,
       hideSummary: false,
       hideToolTip: false,
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Duration (mins)',
+      title: 'Duration per week',
       metric: MetricLabel.Duration,
       value_suffix: Suffix.Mins,
     }
@@ -404,7 +404,7 @@ export const makePaceOverTimeIframeURL = async (apiKey: string, activitiesCollec
     filters: [],
     metric: Metric.PaceMinsPerKm,
     aggregation: Aggregation.Avg,
-    granularity: Granularity.Day,
+    granularity: Granularity.Week,
     customizations: {
       lineColor: LineColour.Pace,
       hideMissing: true,
@@ -413,7 +413,7 @@ export const makePaceOverTimeIframeURL = async (apiKey: string, activitiesCollec
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Pace (Avg, lower is faster)',
+      title: 'Average pace by week',
       metric: MetricLabel.Pace,
       value_suffix: Suffix.MinsPerKm,
     }
@@ -433,7 +433,7 @@ export const makeHeartRateOverTimeIframeURL = async (apiKey: string, activitiesC
     filters: [nonZeroFilter(Metric.HeartRateBpm)],
     metric: Metric.HeartRateBpm,
     aggregation: Aggregation.Avg,
-    granularity: Granularity.Day,
+    granularity: Granularity.Week,
     customizations: {
       lineColor: LineColour.HeartRate,
       hideMissing: true,
@@ -442,7 +442,7 @@ export const makeHeartRateOverTimeIframeURL = async (apiKey: string, activitiesC
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Heart Rate (avg)',
+      title: 'Average Heart Rate by week',
       metric: MetricLabel.HeartRate,
       value_suffix: Suffix.Bpm
     }
