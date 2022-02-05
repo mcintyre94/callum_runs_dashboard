@@ -160,7 +160,7 @@ type GraphJSONDataResponse = {
 }
 
 const requestIframeURL = async (payload: GraphJSONPayload | GraphJSONQueryVisualisationPayload) => {
-  const response = await fetch('https://www.graphjson.com/api/visualize/iframe', {
+  const response = await fetch('https://api.graphjson.com/api/visualize/iframe', {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -170,7 +170,7 @@ const requestIframeURL = async (payload: GraphJSONPayload | GraphJSONQueryVisual
 }
 
 const requestData = async (payload: GraphJSONSamplePayload): Promise<GraphJSONDataResponse> => {
-  const response = await fetch('https://www.graphjson.com/api/visualize/data', {
+  const response = await fetch('https://api.graphjson.com/api/visualize/data', {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -599,13 +599,13 @@ export const logEvent = async (event: GraphJSONEvent, apiKey: string): Promise<v
     json: JSON.stringify(event),
   }
 
-  const result = await fetch('https://www.graphjson.com/api/log', {
+  const result = await fetch('https://api.graphjson.com/api/log', {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   })
 
-  if(result.status != 200) {
+  if (result.status != 200) {
     const resultText = await result.text()
     console.error(`GraphJSON error. Status ${result.status}, ${result.statusText}, ${resultText}`)
   }
