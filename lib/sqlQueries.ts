@@ -1,9 +1,9 @@
 export type SQLQuery = string;
 
-const start2021 = 1640995200;
-const end2021 = 1672531199;
+const start2022 = 1640995200;
+const end2022 = 1672531199;
 
-export const weeklyTargetSqlQuery: SQLQuery = `
+export const weeklyTargetSqlQuery = (activitiesCollection: string): SQLQuery => `
 SELECT
   now('Europe/London') as date,
   toWeek(date, 8) as week_num,
@@ -11,12 +11,12 @@ SELECT
   sum(JSONExtractFloat(json, 'distance_km')) as total_distance,
   2022 - total_distance as required_distance,
   round(required_distance / weeks_left, 2) as weekly_required 
-FROM runs_activities_prod_v1 
+FROM ${activitiesCollection} 
 WHERE JSONExtractString(json, 'activity_type') = 'Running' 
-AND JSONExtractInt(json, 'timestamp') > ${start2021} 
-AND JSONExtractInt(json, 'timestamp') < ${end2021}`;
+AND JSONExtractInt(json, 'timestamp') > ${start2022} 
+AND JSONExtractInt(json, 'timestamp') < ${end2022}`;
 
-export const dailyTargetSqlQuery: SQLQuery = `
+export const dailyTargetSqlQuery = (activitiesCollection: string): SQLQuery => `
 SELECT
   now('Europe/London') as date,
   toDayOfWeek(date) as day_num,
@@ -24,7 +24,7 @@ SELECT
   sum(JSONExtractFloat(json, 'distance_km')) as total_distance,
   2022 - total_distance as required_distance,
   round(required_distance / days_left, 2) as daily_required
-FROM runs_activities_prod_v1
+FROM ${activitiesCollection}
 WHERE JSONExtractString(json, 'activity_type') = 'Running'
-AND JSONExtractInt(json, 'timestamp') > ${start2021}
-AND JSONExtractInt(json, 'timestamp') < ${end2021}`;
+AND JSONExtractInt(json, 'timestamp') > ${start2022}
+AND JSONExtractInt(json, 'timestamp') < ${end2022}`;

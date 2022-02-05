@@ -537,10 +537,10 @@ export const makeAverageScoreOverTimeIframeURL = async (apiKey: string, activiti
   return requestIframeURL(payload);
 }
 
-export const makeWeeklyTargetIframeURL = async (apiKey: string) => {
+export const makeWeeklyTargetIframeURL = async (apiKey: string, activitiesCollection: string) => {
   const payload: GraphJSONQueryVisualisationPayload = {
     api_key: apiKey,
-    sql_query: weeklyTargetSqlQuery,
+    sql_query: weeklyTargetSqlQuery(activitiesCollection),
     graph_type: GraphType.SingleValue,
     customizations: {
       primaryColor: LineColour.Distance,
@@ -553,10 +553,10 @@ export const makeWeeklyTargetIframeURL = async (apiKey: string) => {
   return requestIframeURL(payload);
 }
 
-export const makeDailyTargetIframeURL = async (apiKey: string) => {
+export const makeDailyTargetIframeURL = async (apiKey: string, activitiesCollection: string) => {
   const payload: GraphJSONQueryVisualisationPayload = {
     api_key: apiKey,
-    sql_query: dailyTargetSqlQuery,
+    sql_query: dailyTargetSqlQuery(activitiesCollection),
     graph_type: GraphType.SingleValue,
     customizations: {
       primaryColor: LineColour.Distance,

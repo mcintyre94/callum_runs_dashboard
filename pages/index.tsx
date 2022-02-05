@@ -8,8 +8,8 @@ export async function getStaticProps() {
   const graphJSONCollectionZones = getGraphJSONCollectionZones()
 
   const cumulativeDistanceYearIframeURL = await graphjson.makeCumulativeDistanceYearIframeURL(apiKey, graphJSONCollectionRuns)
-  const weeklyTargetIframeURL = await graphjson.makeWeeklyTargetIframeURL(apiKey)
-  const dailyTargetIframeURL = await graphjson.makeDailyTargetIframeURL(apiKey)
+  const weeklyTargetIframeURL = await graphjson.makeWeeklyTargetIframeURL(apiKey, graphJSONCollectionRuns)
+  const dailyTargetIframeURL = await graphjson.makeDailyTargetIframeURL(apiKey, graphJSONCollectionRuns)
 
   const cumulativeDistanceIframeURL = await graphjson.makeCumulativeDistanceMonthIframeURL(apiKey, graphJSONCollectionRuns)
   const cumulativeDurationIframeURL = await graphjson.makeCumulativeDurationMonthIframeURL(apiKey, graphJSONCollectionRuns)
@@ -56,7 +56,7 @@ type IframeProps = {
 
 function Iframe({ url, height }: IframeProps) {
   return (
-    <iframe className="bg-white p-2 shadow-md border border-blue-100"  height={height} width="100%" src={url}></iframe>
+    <iframe className="bg-white p-2 shadow-md border border-blue-100" height={height} width="100%" src={url}></iframe>
   )
 }
 
@@ -78,7 +78,7 @@ export default function Home({ iframeURLs }: HomeProps) {
       <Head>
         <title>Callum&apos;s Running Dashboard</title>
         <meta name="description" content="Dashboard for tracking my runs!" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -98,12 +98,12 @@ export default function Home({ iframeURLs }: HomeProps) {
           </div>
         </section>
 
-          
+
         <section>
           <Title>This Month</Title>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
             <Iframe url={iframeURLs.cumulativeDistance} height={IframeHeight.Full} />
-            <Iframe url={iframeURLs.cumulativeDuration}  height={IframeHeight.Full} />
+            <Iframe url={iframeURLs.cumulativeDuration} height={IframeHeight.Full} />
             <Iframe url={iframeURLs.heartRateZones} height={IframeHeight.Full} />
             <Iframe url={iframeURLs.score} height={IframeHeight.Full} />
           </div>
