@@ -51,7 +51,7 @@ type OutputError = {
  */
 const getStartDateUTC = (dateRange: string): DateTime => {
   const startDate = dateRange.split(" - ")[0]
-  return DateTime.fromSQL(startDate, {zone: "Etc/UTC"})
+  return DateTime.fromSQL(startDate, { zone: "Etc/UTC" })
 }
 
 /**
@@ -62,11 +62,11 @@ const getStartDateUTC = (dateRange: string): DateTime => {
  * @returns The set of timestamps already recorded
  */
 export const getExistingGraphJSONTimestamps = async (data: HealthExportRow[], graphJSONApiKey: string, graphJSONCollectionRuns: string): Promise<Set<number>> => {
-  if(data.length === 0) return new Set();
-  
+  if (data.length === 0) return new Set();
+
   // Get a date before the first activity + after the last
   const earliestStartDate = getStartDateUTC(data[0].Date).startOf("day").toISO()
-  const latestStartDate = getStartDateUTC(data[data.length-1].Date).endOf("day").toISO()
+  const latestStartDate = getStartDateUTC(data[data.length - 1].Date).endOf("day").toISO()
   // Query GraphJSON for data between those dates
   const samples = await getRunSamples(graphJSONApiKey, graphJSONCollectionRuns, earliestStartDate, latestStartDate)
   return new Set(samples.map(s => s.timestamp))
@@ -88,13 +88,13 @@ export const dateRangeToTimestamp = (dateRange: string): number => {
  * @param graphJSONCollectionRuns GraphJSON runs collection
  * @returns Activity event object to upload to GraphJSON
  */
-export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: string):  ActivityEvent => {
+export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: string): ActivityEvent => {
   const timestamp = dateRangeToTimestamp(row.Date)
   const durationMins = new Decimal(row['Duration(s)']).dividedBy(60)
   const averagePace = durationMins.dividedBy(row['Distance(km)'])
-  const averageHeartRate = row['Heart rate: Average(count/min)'] === null ? 
+  const averageHeartRate = row['Heart rate: Average(count/min)'] === null ?
     null : new Decimal(row['Heart rate: Average(count/min)'])
-  
+
   const score = averagePace === null || averageHeartRate === null ?
     null : scoreRun({
       paceLowerBound,
@@ -113,9 +113,11 @@ export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: s
     distance_km: row['Distance(km)'],
     duration_mins_f: durationMins.toDecimalPlaces(1).toNumber(),
     pace_mins_per_km: averagePace.toDecimalPlaces(2).toNumber(),
-    elevation_ascended_m: row['Elevation: Ascended(m)'],
-    elevation_maximum_m: row['Elevation: Maximum(m)'],
-    elevation_minimum_m: row['Elevation: Minimum(m)'],
+    // note: round elevation to integer, works around graphjson vis bug
+    // where it displays floats below where they should be
+    elevation_ascended_m: Math.round(row['Elevation: Ascended(m)']),
+    elevation_maximum_m: Math.round(row['Elevation: Maximum(m)']),
+    elevation_minimum_m: Math.round(row['Elevation: Minimum(m)']),
     heart_rate_a: row['Heart rate zone: A Easy (<115bpm)(%)'],
     heart_rate_b: row['Heart rate zone: B Fat Burn (115-135bpm)(%)'],
     heart_rate_c: row['Heart rate zone: C Moderate Training (135-155bpm)(%)'],
@@ -129,7 +131,7 @@ export const toActivityEvent = (row: HealthExportRow, graphJSONCollectionRuns: s
 }
 
 const convertToPercentage = (zoneValue: number | null): number => {
-  if(zoneValue === null) {
+  if (zoneValue === null) {
     return null
   }
   return new Decimal(zoneValue).times(100).toDecimalPlaces(1).toNumber()
@@ -172,7 +174,7 @@ async function parseForm(req: NextApiRequest): Promise<string> {
   const form = formidable()
   const csvData: string = await new Promise(function (resolve, reject) {
     form.parse(req, function (err, fields, _files) {
-      if(err) {
+      if (err) {
         reject(err)
         return
       }
@@ -185,8 +187,8 @@ async function parseForm(req: NextApiRequest): Promise<string> {
 async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Papa.ParseError[] | OutputError>) {
   const expectedImportApiKey = getImportApiKey()
   const importApiKeyHeader = req.headers['api-key']
-  if(importApiKeyHeader != expectedImportApiKey) {
-    return res.status(401).json({"error": "Missing or incorrect api-key"})
+  if (importApiKeyHeader != expectedImportApiKey) {
+    return res.status(401).json({ "error": "Missing or incorrect api-key" })
   }
 
   const graphJSONApiKey = getGraphJSONApiKey()
@@ -200,7 +202,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Pa
     dynamicTyping: true,
   });
 
-  if(errors.length > 0) {
+  if (errors.length > 0) {
     return res.status(400).json(errors)
   }
 
@@ -216,24 +218,23 @@ async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Pa
     const foundCloseEventIndex = deduplicatedNewEvents.findIndex(([timestamp, _existingEvent]) =>
       timestamp >= runTimestamp - 10 && timestamp <= runTimestamp + 10
     )
-    if(foundCloseEventIndex === -1) {
+    if (foundCloseEventIndex === -1) {
       // Keep event, we haven't seen a close timestamp yet
       deduplicatedNewEvents.push([runTimestamp, run])
     } else {
-      if(!deduplicatedNewEvents[foundCloseEventIndex][1]['Elevation: Ascended(m)']) {
+      if (!deduplicatedNewEvents[foundCloseEventIndex][1]['Elevation: Ascended(m)']) {
         // existing doesn't have elevation, replace it
-        deduplicatedNewEvents[foundCloseEventIndex] = [runTimestamp, run] 
+        deduplicatedNewEvents[foundCloseEventIndex] = [runTimestamp, run]
       }
     }
   })
 
   const existingTimestamps = await getExistingGraphJSONTimestamps(runsData, graphJSONApiKey, graphJSONCollectionRuns)
   console.log('existingTimestamps', existingTimestamps)
-  
 
   const eventsToLog: GraphJSONEvent[] = deduplicatedNewEvents.flatMap(([timestamp, data]) => {
     const activityEvent = toActivityEvent(data, graphJSONCollectionRuns)
-    if(existingTimestamps.has(timestamp)) {
+    if (existingTimestamps.has(timestamp)) {
       return [] // don't generate any events when it matches an existing timestamp
     } else {
       const zoneEvents = toZoneEvents(activityEvent, graphJSONCollectionZones)
@@ -241,7 +242,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse<OutputData | Pa
     }
   })
 
-  for(const event of eventsToLog) await logEvent(event, graphJSONApiKey)
+  for (const event of eventsToLog) {
+    await logEvent(event, graphJSONApiKey)
+  }
 
   const response: OutputData = {
     loggedCount: eventsToLog.length,
