@@ -19,7 +19,7 @@ AND JSONExtractInt(json, 'timestamp') < ${end2022}`;
 export const dailyTargetSqlQuery = (activitiesCollection: string): SQLQuery => `
 SELECT
   now('Europe/London') as date,
-  toDayOfWeek(date) as day_num,
+  toDayOfYear(date) as day_num,
   365 - day_num as days_left,
   sum(JSONExtractFloat(json, 'distance_km')) as total_distance,
   2022 - total_distance as required_distance,
