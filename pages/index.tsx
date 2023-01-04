@@ -88,20 +88,16 @@ export default function Home({ iframeURLs }: HomeProps) {
       <main role="main" className="p-1 md:p-4 max-w-screen-2xl m-auto">
 
         <section>
-          <Title>Goal: 2022 km in 2022</Title>
+          <Title>2023 🏃🏻‍♂️</Title>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-            <div className="col-span-2"><Iframe url={iframeURLs.cumulativeDistanceYear} height={IframeHeight.Full} /></div>
-            <div className="flex flex-col md:flex-row lg:flex-col gap-4">
-              <Iframe url={iframeURLs.weeklyTarget} height={IframeHeight.Half} />
-              <Iframe url={iframeURLs.dailyTarget} height={IframeHeight.Half} />
-            </div>
+            <div className="col-span-3"><Iframe url={iframeURLs.cumulativeDistanceYear} height={IframeHeight.Full} /></div>
           </div>
         </section>
 
 
         <section>
           <Title>This Month</Title>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <Iframe url={iframeURLs.cumulativeDistance} height={IframeHeight.Full} />
             <Iframe url={iframeURLs.cumulativeDuration} height={IframeHeight.Full} />
             <Iframe url={iframeURLs.heartRateZones} height={IframeHeight.Full} />
