@@ -83,6 +83,7 @@ export default function Home({ iframeURLs }: HomeProps) {
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="manifest" href="/site.webmanifest" />
+        <script src="https://beamanalytics.io/beam.min.js" data-token="fb33585e-24a2-4769-ade4-f81b34abab12" async></script>
       </Head>
 
       <main role="main" className="p-1 md:p-4 max-w-screen-2xl m-auto">
