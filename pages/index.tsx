@@ -89,7 +89,7 @@ export default function Home({ iframeURLs }: HomeProps) {
       <main role="main" className="p-1 md:p-4 max-w-screen-2xl m-auto">
 
         <section>
-          <Title>2023 🏃🏻‍♂️</Title>
+          <Title>2024 🏃🏻‍♂️</Title>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             <div className="col-span-3"><Iframe url={iframeURLs.cumulativeDistanceYear} height={IframeHeight.Full} /></div>
           </div>

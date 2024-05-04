@@ -1,194 +1,205 @@
-import type { GraphJSONEvent } from "./event"
-import { DateTime } from "luxon"
+import type { GraphJSONEvent } from "./event";
+import { DateTime } from "luxon";
 import { dailyTargetSqlQuery, weeklyTargetSqlQuery } from "./sqlQueries";
 import type { SQLQuery } from "./sqlQueries";
 
 enum LineColour {
-  Distance = '#0345fc',
-  Duration = '#036648',
-  Pace = '#ec8d09',
-  HeartRate = '#ba040d',
-  Score = '#a809f1',
+  Distance = "#0345fc",
+  Duration = "#036648",
+  Pace = "#ec8d09",
+  HeartRate = "#ba040d",
+  Score = "#a809f1",
 }
 
 enum Metric {
-  DistanceKm = 'distance_km',
-  DurationsMins = 'duration_mins_f',
-  PaceMinsPerKm = 'pace_mins_per_km',
-  HeartRateBpm = 'heart_rate_avg_rounded_i',
-  Score = 'score',
-  ZoneValue = 'value',
-  Zone = 'zone',
+  DistanceKm = "distance_km",
+  DurationsMins = "duration_mins_f",
+  PaceMinsPerKm = "pace_mins_per_km",
+  HeartRateBpm = "heart_rate_avg_rounded_i",
+  Score = "score",
+  ZoneValue = "value",
+  Zone = "zone",
 }
 
 enum MetricLabel {
-  Distance = 'Distance',
-  Duration = 'Duration',
-  Pace = 'Pace',
-  Score = 'Score',
-  HeartRate = 'Heart Rate',
-  Proportion = 'Proportion',
-  PerWeekForGoal = 'Per Week For Goal',
-  PerDayForGoal = 'Per Day For Goal',
+  Distance = "Distance",
+  Duration = "Duration",
+  Pace = "Pace",
+  Score = "Score",
+  HeartRate = "Heart Rate",
+  Proportion = "Proportion",
+  PerWeekForGoal = "Per Week For Goal",
+  PerDayForGoal = "Per Day For Goal",
 }
 
 enum GraphType {
-  CumulativeLine = 'Cumulative Line',
-  SingleLine = 'Single Line',
-  StackedLine = 'Stacked Line',
-  Samples = 'Samples',
-  SingleValue = 'Single Value',
+  CumulativeLine = "Cumulative Line",
+  SingleLine = "Single Line",
+  StackedLine = "Stacked Line",
+  Samples = "Samples",
+  SingleValue = "Single Value",
 }
 
 enum Aggregation {
-  Sum = 'Sum',
-  Avg = 'Avg',
+  Sum = "Sum",
+  Avg = "Avg",
 }
 
 export enum Time {
-  OneMonthAgo = '1 month ago',
-  Now = 'now',
-  Start2021 = '01/01/2021 0:00 am',
-  StartJuly2021 = '07/01/2021 0:00 am',
-  Start2022 = '01/01/2022 0:00 am',
-  Start2023 = '01/01/2023 0:00 am',
-  End2023 = '12/31/2023 23:59 pm',
+  OneMonthAgo = "1 month ago",
+  Now = "now",
+  Start2021 = "01/01/2021 0:00 am",
+  StartJuly2021 = "07/01/2021 0:00 am",
+  Start2022 = "01/01/2022 0:00 am",
+  Start2024 = "01/01/2024 0:00 am",
+  End2024 = "12/31/2024 23:59 pm",
 }
 
-const startOfMonth = DateTime.local().startOf('month').toString();
+const startOfMonth = DateTime.local().startOf("month").toString();
 
-const nonZeroFilter = (metric: Metric): GraphJSONFilter => (
-  [metric.toString(), ">", "0"]
-);
+const nonZeroFilter = (metric: Metric): GraphJSONFilter => [
+  metric.toString(),
+  ">",
+  "0",
+];
 
 enum Granularity {
-  Day = 'Day',
-  Week = 'Week',
+  Day = "Day",
+  Week = "Week",
 }
 
 enum Timezone {
-  London = 'Europe/London',
-  UTC = 'Etc/UTC',
+  London = "Europe/London",
+  UTC = "Etc/UTC",
 }
 
 enum ComparisonLabel {
-  LastMonth = 'Last Month',
+  LastMonth = "Last Month",
 }
 
 enum Suffix {
-  Km = 'km',
-  SpaceKm = ' km',
-  Mins = 'mins',
-  MinsPerKm = 'mins/km',
-  Bpm = 'bpm',
-  Percent = '%',
+  Km = "km",
+  SpaceKm = " km",
+  Mins = "mins",
+  MinsPerKm = "mins/km",
+  Bpm = "bpm",
+  Percent = "%",
 }
 
 type GraphJSONCustomizations = {
-  lineColor?: LineColour,
-  primaryColor?: LineColour,
-  hideMissing: boolean,
-  hideSummary: boolean,
-  hideToolTip: boolean,
-  showDots: boolean,
-  hideXAxis: boolean,
-  showYAxis: boolean,
-  title: string,
-  metric?: MetricLabel,
-  comparison?: ComparisonLabel,
-  value_suffix?: Suffix
-}
+  lineColor?: LineColour;
+  primaryColor?: LineColour;
+  hideMissing: boolean;
+  hideSummary: boolean;
+  hideToolTip: boolean;
+  showDots: boolean;
+  hideXAxis: boolean;
+  showYAxis: boolean;
+  title: string;
+  metric?: MetricLabel;
+  comparison?: ComparisonLabel;
+  value_suffix?: Suffix;
+};
 
-type GraphJSONFilter = [string, string, string]
+type GraphJSONFilter = [string, string, string];
 
 type GraphJSONPayload = {
-  api_key: string,
-  collection: string,
-  IANA_time_zone: string,
-  graph_type: GraphType,
-  start: Time | typeof startOfMonth,
-  end: Time,
-  compare?: Time,
-  filters: GraphJSONFilter[],
-  metric: Metric,
-  aggregation: Aggregation,
-  granularity: Granularity,
-  split?: Metric,
-  customizations: GraphJSONCustomizations
-}
+  api_key: string;
+  collection: string;
+  IANA_time_zone: string;
+  graph_type: GraphType;
+  start: Time | typeof startOfMonth;
+  end: Time;
+  compare?: Time;
+  filters: GraphJSONFilter[];
+  metric: Metric;
+  aggregation: Aggregation;
+  granularity: Granularity;
+  split?: Metric;
+  customizations: GraphJSONCustomizations;
+};
 
 type GraphJSONSamplePayload = {
-  api_key: string,
-  collection: string,
-  IANA_time_zone: string,
-  graph_type: GraphType,
-  start: string,
-  end: string,
-  filters: GraphJSONFilter[],
-  customizations: {}
-}
+  api_key: string;
+  collection: string;
+  IANA_time_zone: string;
+  graph_type: GraphType;
+  start: string;
+  end: string;
+  filters: GraphJSONFilter[];
+  customizations: {};
+};
 
 type GraphJSONQueryVisualisationPayload = {
-  api_key: string,
-  sql_query: SQLQuery,
-  graph_type: GraphType,
+  api_key: string;
+  sql_query: SQLQuery;
+  graph_type: GraphType;
   customizations: {
-    primaryColor: LineColour,
-    metric: MetricLabel,
-    value_suffix: Suffix,
-  },
-  value_column: string,
-}
+    primaryColor: LineColour;
+    metric: MetricLabel;
+    value_suffix: Suffix;
+  };
+  value_column: string;
+};
 
 type GraphJSONEventPayload = {
-  api_key: string,
-  collection: string,
-  timestamp: number,
-  json: string,
-}
+  api_key: string;
+  collection: string;
+  timestamp: number;
+  json: string;
+};
 
 type GraphJSONVisualiseIframeResponse = {
-  url: string
-}
+  url: string;
+};
 
 type GraphJSONDataResponse = {
   result: [
     {
-      json: Object,
-      timestamp: number
+      json: Object;
+      timestamp: number;
     }
-  ]
-}
+  ];
+};
 
-const requestIframeURL = async (payload: GraphJSONPayload | GraphJSONQueryVisualisationPayload) => {
-  const response = await fetch('https://api.graphjson.com/api/visualize/iframe', {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  })
+const requestIframeURL = async (
+  payload: GraphJSONPayload | GraphJSONQueryVisualisationPayload
+) => {
+  const response = await fetch(
+    "https://api.graphjson.com/api/visualize/iframe",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }
+  );
   const jsonResponse: GraphJSONVisualiseIframeResponse = await response.json();
-  return jsonResponse.url
-}
+  return jsonResponse.url;
+};
 
-const requestData = async (payload: GraphJSONSamplePayload): Promise<GraphJSONDataResponse> => {
-  const response = await fetch('https://api.graphjson.com/api/visualize/data', {
+const requestData = async (
+  payload: GraphJSONSamplePayload
+): Promise<GraphJSONDataResponse> => {
+  const response = await fetch("https://api.graphjson.com/api/visualize/data", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  })
+    body: JSON.stringify(payload),
+  });
 
-  const jsonResponse: GraphJSONDataResponse = await response.json()
-  return jsonResponse
-}
+  const jsonResponse: GraphJSONDataResponse = await response.json();
+  return jsonResponse;
+};
 
-
-export const makeCumulativeDistanceYearIframeURL = async (apiKey: string, activitiesCollection: string) => {
+export const makeCumulativeDistanceYearIframeURL = async (
+  apiKey: string,
+  activitiesCollection: string
+) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
     collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.CumulativeLine,
-    start: Time.Start2023,
+    start: Time.Start2024,
     end: Time.Now,
     filters: [],
     metric: Metric.DistanceKm,
@@ -202,17 +213,19 @@ export const makeCumulativeDistanceYearIframeURL = async (apiKey: string, activi
       showDots: false,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Total Distance this year',
+      title: "Total Distance this year",
       metric: MetricLabel.Distance,
       value_suffix: Suffix.Km,
-    }
-  }
+    },
+  };
 
   return requestIframeURL(payload);
-}
+};
 
-
-export const makeCumulativeDistanceMonthIframeURL = async (apiKey: string, activitiesCollection: string) => {
+export const makeCumulativeDistanceMonthIframeURL = async (
+  apiKey: string,
+  activitiesCollection: string
+) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
     collection: activitiesCollection,
@@ -233,17 +246,20 @@ export const makeCumulativeDistanceMonthIframeURL = async (apiKey: string, activ
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Distance',
+      title: "Distance",
       metric: MetricLabel.Distance,
       comparison: ComparisonLabel.LastMonth,
       value_suffix: Suffix.Km,
-    }
-  }
+    },
+  };
 
-  return requestIframeURL(payload)
-}
+  return requestIframeURL(payload);
+};
 
-export const makeCumulativeDurationMonthIframeURL = async (apiKey: string, activitiesCollection: string) => {
+export const makeCumulativeDurationMonthIframeURL = async (
+  apiKey: string,
+  activitiesCollection: string
+) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
     collection: activitiesCollection,
@@ -264,17 +280,20 @@ export const makeCumulativeDurationMonthIframeURL = async (apiKey: string, activ
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Duration',
+      title: "Duration",
       metric: MetricLabel.Duration,
       comparison: ComparisonLabel.LastMonth,
-      value_suffix: Suffix.Mins
-    }
-  }
+      value_suffix: Suffix.Mins,
+    },
+  };
 
   return requestIframeURL(payload);
-}
+};
 
-export const makeHeartRateZonesMonthIframeURL = async (apiKey: string, zonesCollection: string) => {
+export const makeHeartRateZonesMonthIframeURL = async (
+  apiKey: string,
+  zonesCollection: string
+) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
     collection: zonesCollection,
@@ -294,17 +313,19 @@ export const makeHeartRateZonesMonthIframeURL = async (apiKey: string, zonesColl
       showDots: true,
       hideXAxis: false,
       showYAxis: false,
-      title: 'Heart Rate Zones',
+      title: "Heart Rate Zones",
       metric: MetricLabel.Proportion,
       value_suffix: Suffix.Percent,
-    }
-  }
+    },
+  };
 
   return requestIframeURL(payload);
-}
+};
 
-
-export const makeScoreMonthIframeURL = async (apiKey: string, activitiesCollection: string) => {
+export const makeScoreMonthIframeURL = async (
+  apiKey: string,
+  activitiesCollection: string
+) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
     collection: activitiesCollection,
@@ -325,18 +346,20 @@ export const makeScoreMonthIframeURL = async (apiKey: string, activitiesCollecti
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Score',
+      title: "Score",
       // metric: MetricLabel.Duration,
       comparison: ComparisonLabel.LastMonth,
       // value_suffix: Suffix.Mins
-    }
-  }
+    },
+  };
 
   return requestIframeURL(payload);
-}
+};
 
-
-export const makeDistanceOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
+export const makeDistanceOverTimeIframeURL = async (
+  apiKey: string,
+  activitiesCollection: string
+) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
     collection: activitiesCollection,
@@ -356,16 +379,19 @@ export const makeDistanceOverTimeIframeURL = async (apiKey: string, activitiesCo
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Distance by week',
+      title: "Distance by week",
       metric: MetricLabel.Distance,
       value_suffix: Suffix.Km,
-    }
-  }
+    },
+  };
 
   return requestIframeURL(payload);
-}
+};
 
-export const makeDurationOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
+export const makeDurationOverTimeIframeURL = async (
+  apiKey: string,
+  activitiesCollection: string
+) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
     collection: activitiesCollection,
@@ -385,16 +411,19 @@ export const makeDurationOverTimeIframeURL = async (apiKey: string, activitiesCo
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Duration by week',
+      title: "Duration by week",
       metric: MetricLabel.Duration,
       value_suffix: Suffix.Mins,
-    }
-  }
+    },
+  };
 
   return requestIframeURL(payload);
-}
+};
 
-export const makePaceOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
+export const makePaceOverTimeIframeURL = async (
+  apiKey: string,
+  activitiesCollection: string
+) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
     collection: activitiesCollection,
@@ -414,16 +443,19 @@ export const makePaceOverTimeIframeURL = async (apiKey: string, activitiesCollec
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Average Pace by week',
+      title: "Average Pace by week",
       metric: MetricLabel.Pace,
       value_suffix: Suffix.MinsPerKm,
-    }
-  }
+    },
+  };
 
   return requestIframeURL(payload);
-}
+};
 
-export const makeHeartRateOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
+export const makeHeartRateOverTimeIframeURL = async (
+  apiKey: string,
+  activitiesCollection: string
+) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
     collection: activitiesCollection,
@@ -443,16 +475,19 @@ export const makeHeartRateOverTimeIframeURL = async (apiKey: string, activitiesC
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Average Heart Rate by week',
+      title: "Average Heart Rate by week",
       metric: MetricLabel.HeartRate,
-      value_suffix: Suffix.Bpm
-    }
-  }
+      value_suffix: Suffix.Bpm,
+    },
+  };
 
   return requestIframeURL(payload);
-}
+};
 
-export const makeHeartRateZonesOverTimeIframeURL = async (apiKey: string, zonesCollection: string) => {
+export const makeHeartRateZonesOverTimeIframeURL = async (
+  apiKey: string,
+  zonesCollection: string
+) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
     collection: zonesCollection,
@@ -472,16 +507,19 @@ export const makeHeartRateZonesOverTimeIframeURL = async (apiKey: string, zonesC
       showDots: true,
       hideXAxis: false,
       showYAxis: false,
-      title: 'Heart Rate Zones by week',
+      title: "Heart Rate Zones by week",
       metric: MetricLabel.Proportion,
       value_suffix: Suffix.Percent,
-    }
-  }
+    },
+  };
 
   return requestIframeURL(payload);
-}
+};
 
-export const makeCumulativeDistanceOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
+export const makeCumulativeDistanceOverTimeIframeURL = async (
+  apiKey: string,
+  activitiesCollection: string
+) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
     collection: activitiesCollection,
@@ -501,16 +539,19 @@ export const makeCumulativeDistanceOverTimeIframeURL = async (apiKey: string, ac
       showDots: false,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Total Distance In Streak',
+      title: "Total Distance In Streak",
       metric: MetricLabel.Distance,
       value_suffix: Suffix.Km,
-    }
-  }
+    },
+  };
 
   return requestIframeURL(payload);
-}
+};
 
-export const makeAverageScoreOverTimeIframeURL = async (apiKey: string, activitiesCollection: string) => {
+export const makeAverageScoreOverTimeIframeURL = async (
+  apiKey: string,
+  activitiesCollection: string
+) => {
   const payload: GraphJSONPayload = {
     api_key: apiKey,
     collection: activitiesCollection,
@@ -530,15 +571,18 @@ export const makeAverageScoreOverTimeIframeURL = async (apiKey: string, activiti
       showDots: true,
       hideXAxis: false,
       showYAxis: true,
-      title: 'Average Score by week',
+      title: "Average Score by week",
       metric: MetricLabel.Score,
-    }
-  }
+    },
+  };
 
   return requestIframeURL(payload);
-}
+};
 
-export const makeWeeklyTargetIframeURL = async (apiKey: string, activitiesCollection: string) => {
+export const makeWeeklyTargetIframeURL = async (
+  apiKey: string,
+  activitiesCollection: string
+) => {
   const payload: GraphJSONQueryVisualisationPayload = {
     api_key: apiKey,
     sql_query: weeklyTargetSqlQuery(activitiesCollection),
@@ -549,12 +593,15 @@ export const makeWeeklyTargetIframeURL = async (apiKey: string, activitiesCollec
       value_suffix: Suffix.SpaceKm,
     },
     value_column: "weekly_required",
-  }
+  };
 
   return requestIframeURL(payload);
-}
+};
 
-export const makeDailyTargetIframeURL = async (apiKey: string, activitiesCollection: string) => {
+export const makeDailyTargetIframeURL = async (
+  apiKey: string,
+  activitiesCollection: string
+) => {
   const payload: GraphJSONQueryVisualisationPayload = {
     api_key: apiKey,
     sql_query: dailyTargetSqlQuery(activitiesCollection),
@@ -565,18 +612,22 @@ export const makeDailyTargetIframeURL = async (apiKey: string, activitiesCollect
       value_suffix: Suffix.SpaceKm,
     },
     value_column: "daily_required",
-  }
+  };
 
   return requestIframeURL(payload);
-}
-
+};
 
 export type RunSample = {
-  timestamp: number
-  json: Object
-}
+  timestamp: number;
+  json: Object;
+};
 
-export const getRunSamples = async (apiKey: string, activitiesCollection: string, startDate: string, endDate: string): Promise<RunSample[]> => {
+export const getRunSamples = async (
+  apiKey: string,
+  activitiesCollection: string,
+  startDate: string,
+  endDate: string
+): Promise<RunSample[]> => {
   const payload: GraphJSONSamplePayload = {
     api_key: apiKey,
     collection: activitiesCollection,
@@ -586,30 +637,35 @@ export const getRunSamples = async (apiKey: string, activitiesCollection: string
     end: endDate,
     filters: [],
     customizations: {},
-  }
+  };
 
-  const graphJSONData = await requestData(payload)
-  return graphJSONData.result
-}
+  const graphJSONData = await requestData(payload);
+  return graphJSONData.result;
+};
 
-export const logEvent = async (event: GraphJSONEvent, apiKey: string): Promise<void> => {
+export const logEvent = async (
+  event: GraphJSONEvent,
+  apiKey: string
+): Promise<void> => {
   const payload: GraphJSONEventPayload = {
     api_key: apiKey,
     collection: event.collection,
     timestamp: event.timestamp,
     json: JSON.stringify(event),
-  }
+  };
 
-  const result = await fetch('https://api.graphjson.com/api/log', {
+  const result = await fetch("https://api.graphjson.com/api/log", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  })
+    body: JSON.stringify(payload),
+  });
 
   if (result.status != 200) {
-    const resultText = await result.text()
-    console.error(`GraphJSON error. Status ${result.status}, ${result.statusText}, ${resultText}`)
+    const resultText = await result.text();
+    console.error(
+      `GraphJSON error. Status ${result.status}, ${result.statusText}, ${resultText}`
+    );
   }
 
-  console.log('Logged event to GraphJSON', event)
-}
+  console.log("Logged event to GraphJSON", event);
+};
