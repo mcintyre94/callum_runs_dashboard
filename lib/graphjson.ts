@@ -51,8 +51,8 @@ export enum Time {
   Start2021 = "01/01/2021 0:00 am",
   StartJuly2021 = "07/01/2021 0:00 am",
   Start2022 = "01/01/2022 0:00 am",
-  Start2024 = "01/01/2024 0:00 am",
-  End2024 = "12/31/2024 23:59 pm",
+  Start2025 = "01/01/2025 0:00 am",
+  End2025 = "12/31/2025 23:59 pm",
 }
 
 const startOfMonth = DateTime.local().startOf("month").toString();
@@ -158,7 +158,7 @@ type GraphJSONDataResponse = {
     {
       json: Object;
       timestamp: number;
-    }
+    },
   ];
 };
 
@@ -199,7 +199,7 @@ export const makeCumulativeDistanceYearIframeURL = async (
     collection: activitiesCollection,
     IANA_time_zone: Timezone.London,
     graph_type: GraphType.CumulativeLine,
-    start: Time.Start2024,
+    start: Time.Start2025,
     end: Time.Now,
     filters: [],
     metric: Metric.DistanceKm,
